@@ -198,8 +198,8 @@ export default function AdvancedSearchBar({
         <div
           ref={searchRef}
           className={`transition-all duration-300 ${isShrunk && !expanding
-            ? 'w-10 h-10 p-0 rounded-full border border-gray-300 flex items-center justify-center bg-white text-black shadow-md z-[200] right-0'
-            : 'w-full md:w-[400px] max-w-lg rounded-xl border border-fuchsia-200 bg-white text-black shadow-lg z-[300]'}
+            ? 'w-10 h-10 p-0 rounded-full border border-red-300 flex items-center justify-center bg-white text-black shadow-md z-[200] right-0'
+            : 'w-full md:w-[400px] max-w-lg rounded-xl border border-red-200 bg-white text-black shadow-lg z-[300]'}
           `}
           style={{
             minWidth: isShrunk && !expanding ? 40 : undefined,
@@ -225,14 +225,14 @@ export default function AdvancedSearchBar({
                 }, 300);
               }}
             >
-              <FiSearch className="w-5 h-5 text-fuchsia-500" />
+              <FiSearch className="w-5 h-5 text-[#C73838]" />
             </button>
           ) : (
             <div className="flex flex-col md:flex-row gap-2 w-full">
               {/* Input de búsqueda */}
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiSearch className="text-fuchsia-400" />
+                  <FiSearch className="text-[#C73838]" />
                 </div>
                 <input
                   type="text"
@@ -243,7 +243,7 @@ export default function AdvancedSearchBar({
                   onBlur={() => setTimeout(() => setInputFocused(false), 100)}
                   placeholder="Buscar productos..."
                   aria-label="Buscar productos"
-                  className="block w-full pl-8 pr-20 py-2 text-base border border-fuchsia-200 rounded-xl bg-white shadow focus:outline-none focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 text-black"
+                  className="block w-full pl-8 pr-20 py-2 text-base border border-red-200 rounded-xl bg-white shadow focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-red-300 text-black"
                 />
                 {/* Limpiar input */}
                 {query && (
@@ -251,7 +251,7 @@ export default function AdvancedSearchBar({
                     type="button"
                     aria-label="Limpiar búsqueda"
                     onClick={() => { setQuery(''); setSuggestions([]); setHighlightedIndex(-1); }}
-                    className="absolute inset-y-0 right-14 pr-2 flex items-center text-gray-400 hover:text-gray-600"
+                    className="absolute inset-y-0 right-14 pr-2 flex items-center text-gray-400 hover:text-[#C73838]"
                   >
                     <FiX />
                   </button>
@@ -260,23 +260,23 @@ export default function AdvancedSearchBar({
                 <button
                   onClick={handleSearch}
                   disabled={!query.trim()}
-                  className="absolute inset-y-0 right-0 px-3 py-2 text-base border border-fuchsia-200 font-medium rounded-r-xl shadow text-fuchsia-700 bg-white hover:bg-fuchsia-50 focus:outline-none focus:ring-2 focus:ring-fuchsia-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="absolute inset-y-0 right-0 px-3 py-2 text-base border border-red-300 font-medium rounded-r-xl shadow text-[#C73838] bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-[#C73838] disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
                   style={{ height: '100%' }}
                   aria-label="Buscar"
                 >
-                  <FiSearch className="w-5 h-5 text-orange-400" />
+                  <FiSearch className="w-5 h-5" />
                 </button>
                 {/* Spinner */}
                 {isLoading && (
                   <div className="absolute inset-y-0 right-24 pr-3 flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-fuchsia-400"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#C73838]"></div>
                   </div>
                 )}
                 {/* Sugerencias/autocompletado */}
                 {(suggestions.length > 0 || (inputFocused && !query && searchHistory.length > 0)) && (
-                  <div className="absolute z-10 mt-2 w-full bg-white shadow-lg rounded-xl py-1 text-base ring-1 ring-fuchsia-200 ring-opacity-60 overflow-auto max-h-60 focus:outline-none">
+                  <div className="absolute z-10 mt-2 w-full bg-white shadow-lg rounded-xl py-1 text-base ring-1 ring-red-200 ring-opacity-60 overflow-auto max-h-60 focus:outline-none">
                     {suggestions.length === 0 && (
-                      <div className="px-4 py-2 text-fuchsia-200 text-sm">Sin resultados</div>
+                      <div className="px-4 py-2 text-red-300 text-sm">Sin resultados</div>
                     )}
                     {suggestions.map((item, idx) => {
                       const isActive = highlightedIndex === idx;
@@ -285,9 +285,9 @@ export default function AdvancedSearchBar({
                         <div
                           key={item.id}
                           className={`cursor-pointer select-none relative py-2 pl-3 pr-9 transition-colors duration-150 bg-white
-                            ${isActive ? (isHistory ? 'bg-fuchsia-100/80' : 'bg-fuchsia-200') : ''}
-                            ${!isActive && isHistory ? 'hover:bg-fuchsia-50' : ''}
-                            ${!isActive && !isHistory ? 'hover:bg-fuchsia-100' : ''}`
+                            ${isActive ? (isHistory ? 'bg-red-100/80' : 'bg-red-100') : ''}
+                            ${!isActive && isHistory ? 'hover:bg-red-50' : ''}
+                            ${!isActive && !isHistory ? 'hover:bg-red-50' : ''}`
                           }
                           onClick={() => {
                             setQuery(item.title);
@@ -302,12 +302,12 @@ export default function AdvancedSearchBar({
                             <div className="flex items-center min-w-0">
                               <span className="font-normal text-black block truncate">{item.title}</span>
                               {item.category && (
-                                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-fuchsia-100">
+                                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-red-200">
                                   {item.category}
                                 </span>
                               )}
                               {isHistory && (
-                                <span className="ml-2 text-xs text-fuchsia-400">
+                                <span className="ml-2 text-xs text-[#C73838]">
                                   {idx === 0 ? "Búsqueda más reciente" : "Buscado anteriormente"}
                                 </span>
                               )}
@@ -316,7 +316,7 @@ export default function AdvancedSearchBar({
                             {isHistory && (
                               <button
                                 type="button"
-                                className="ml-2 text-fuchsia-300 hover:text-fuchsia-700 p-1 rounded-full"
+                                className="ml-2 text-red-300 hover:text-[#C73838] p-1 rounded-full"
                                 onClick={e => {
                                   e.stopPropagation();
                                   const updatedHistory = searchHistory.filter(h => h !== item.title);
@@ -341,10 +341,10 @@ export default function AdvancedSearchBar({
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`inline-flex items-center px-4 py-2 text-base border font-medium rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 ${
+                  className={`inline-flex items-center px-4 py-2 text-base border font-medium rounded-xl shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C73838] ${
                     hasActiveFilters
-                      ? 'border-transparent bg-orange-400 text-white hover:bg-orange-500'
-                      : 'border-orange-200 bg-white text-orange-700 hover:bg-orange-50'
+                      ? 'border-transparent bg-[#C73838] text-white hover:bg-[#B11212]'
+                      : 'border-red-200 bg-white text-[#C73838] hover:bg-red-50'
                   }`}
                 >
                   <FiFilter className="mr-2" />
@@ -367,7 +367,7 @@ export default function AdvancedSearchBar({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="block w-full pl-3 pr-10 py-2 text-base border-fuchsia-300 focus:outline-none focus:ring-fuchsia-500 focus:border-fuchsia-500 sm:text-sm rounded-md bg-white text-fuchsia-700"
+            className="block w-full pl-3 pr-10 py-2 text-base border-red-300 focus:outline-none focus:ring-[#C73838] focus:border-red-300 sm:text-sm rounded-md bg-white text-[#C73838]"
           >
             <option value="">Todas las categorías</option>
             {categories.map(category => (
@@ -394,13 +394,13 @@ export default function AdvancedSearchBar({
             return (
               <span
                 key={key}
-                className="inline-flex items-center py-1 pl-3 pr-2 rounded-full text-xs font-medium bg-fuchsia-100 text-fuchsia-700"
+                className="inline-flex items-center py-1 pl-3 pr-2 rounded-full text-xs font-medium bg-red-100 text-[#C73838]"
               >
                 {filter?.label}: {displayValue}
                 <button
                   type="button"
                   onClick={() => clearFilter(key)}
-                  className="flex-shrink-0 ml-1 inline-flex text-fuchsia-500 hover:text-fuchsia-700"
+                  className="flex-shrink-0 ml-1 inline-flex text-red-400 hover:text-[#C73838]"
                 >
                   <FiX className="h-3 w-3" />
                 </button>
@@ -409,7 +409,7 @@ export default function AdvancedSearchBar({
           })}
           <button
             onClick={clearAllFilters}
-            className="text-xs text-fuchsia-500 hover:text-fuchsia-700 font-medium"
+            className="text-xs text-[#C73838] hover:text-[#B11212] font-medium"
           >
             Limpiar todos
           </button>
@@ -418,12 +418,12 @@ export default function AdvancedSearchBar({
 
       {/* Panel de filtros avanzados */}
       {showFilters && filters.length > 0 && (
-        <div className="bg-white p-4 mt-2 border border-orange-300 rounded-lg shadow-sm">
+        <div className="bg-white p-4 mt-2 border border-red-300 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900">Filtrar por</h3>
             <button
               onClick={clearAllFilters}
-              className="text-sm text-fuchsia-500 hover:text-fuchsia-700 font-medium"
+              className="text-sm text-[#C73838] hover:text-[#B11212] font-medium"
             >
               Limpiar todos
             </button>
@@ -450,7 +450,7 @@ export default function AdvancedSearchBar({
                               : current.filter((v: string) => v !== option);
                             handleFilterChange(filter.id, newValue);
                           }}
-                          className="h-4 w-4 text-fuchsia-700 focus:ring-fuchsia-500 border-fuchsia-300 rounded"
+                          className="h-4 w-4 text-[#C73838] focus:ring-[#C73838] border-red-300 rounded"
                         />
                         <label
                           htmlFor={`${filter.id}-${option}`}
@@ -472,11 +472,11 @@ export default function AdvancedSearchBar({
                       step={filter.step || 1}
                       value={activeFilters[filter.id] || filter.min}
                       onChange={(e) => handleFilterChange(filter.id, parseInt(e.target.value))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      className="w-full h-2 bg-red-200 rounded-lg appearance-none cursor-pointer"
                     />
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>{filter.min}</span>
-                      <span className="font-medium text-fuchsia-700">
+                      <span className="font-medium text-[#C73838]">
                         {activeFilters[filter.id] || filter.min}
                       </span>
                       <span>{filter.max}</span>
@@ -488,7 +488,7 @@ export default function AdvancedSearchBar({
                   <select
                     value={activeFilters[filter.id] || ''}
                     onChange={(e) => handleFilterChange(filter.id, e.target.value)}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-fuchsia-300 focus:outline-none focus:ring-fuchsia-500 focus:border-fuchsia-500 sm:text-sm rounded-md bg-white text-fuchsia-700"
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-red-300 focus:outline-none focus:ring-[#C73838] focus:border-red-300 sm:text-sm rounded-md bg-white text-[#C73838]"
                   >
                     <option value="">Todos</option>
                     {filter.options.map(option => (
