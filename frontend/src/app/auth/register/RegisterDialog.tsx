@@ -15,11 +15,15 @@ import {
   IconGenderMale,
   IconGenderFemale,
   IconUserPlus,
-  IconArrowBackUp,
+  IconLogin,
 } from '@tabler/icons-react';
 import Swal from "sweetalert2";
 
-const RegisterDialog: React.FC = () => {
+interface RegisterDialogProps {
+  onSwitchToLogin?: () => void;
+}
+
+const RegisterDialog: React.FC<RegisterDialogProps> = ({ onSwitchToLogin }) => {
   // Estados locales para almacenar los valores de los campos
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -39,9 +43,9 @@ const RegisterDialog: React.FC = () => {
         icon: "error",
         title: "Error",
         text: "Las contraseñas no coinciden",
-        background: "#fff0fa",
-        color: "#a21caf",
-        iconColor: "#a21caf",
+        background: "#fff5f5",
+        color: "#C73838",
+        iconColor: "#C73838",
       });
       return;
     }
@@ -64,16 +68,14 @@ const RegisterDialog: React.FC = () => {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        // Mostrar mensajes específicos de error si existen
         if (errorData.password && Array.isArray(errorData.password)) {
           alert('Error de contraseña: ' + errorData.password.join(' '));
         } else if (errorData.detail) {
           alert('Error: ' + errorData.detail);
         } else if (typeof errorData === 'object') {
-          // Mostrar el primer error de cualquier campo
           const firstKey = Object.keys(errorData)[0];
           if (firstKey && Array.isArray(errorData[firstKey])) {
-          alert(`${firstKey}: ${errorData[firstKey].join(' ')}`);
+            alert(`${firstKey}: ${errorData[firstKey].join(' ')}`);
           } else {
             alert('Error en el registro');
           }
@@ -84,12 +86,13 @@ const RegisterDialog: React.FC = () => {
       }
       Swal.fire({
         icon: "success",
-        title: "¡Registro de usuario exitoso!",
+        title: "¡Registro exitoso!",
+        text: "Tu cuenta ha sido creada correctamente",
         showConfirmButton: false,
         timer: 1800,
-        background: "#fff0fa",
-        color: "#a21caf",
-        iconColor: "#a21caf",
+        background: "#fff5f5",
+        color: "#C73838",
+        iconColor: "#C73838",
       });
       setEmail('');
       setPassword('');
@@ -105,207 +108,236 @@ const RegisterDialog: React.FC = () => {
         icon: "error",
         title: "Error",
         text: "Error al registrar usuario: " + err.message,
-        background: "#fff0fa",
-        color: "#a21caf",
-        iconColor: "#a21caf",
+        background: "#fff5f5",
+        color: "#C73838",
+        iconColor: "#C73838",
       });
     }
   };
+
   return (
     <form
-      className="flex flex-col gap-6 p-8 w-full bg-white rounded-2xl shadow-2xl max-w-sm mx-auto border border-fuchsia-100"
+      className="w-full bg-white rounded-3xl shadow-2xl border border-red-100 p-8 space-y-6 max-w-md"
       onSubmit={handleSubmit}
       autoComplete="on"
     >
-      <div className="flex flex-col items-center gap-2 mb-2">
-        <span className="bg-fuchsia-600 rounded-full p-3 shadow-lg mb-1">
-          <IconUserPlus size={34} className="text-white" />
-        </span>
-        <h2 className="text-2xl font-extrabold text-center text-fuchsia-700 tracking-wide">
-          Crear cuenta
-        </h2>
-        <p className="text-xs text-gray-500 text-center max-w-xs">
-          ¡Bienvenido! Completa el formulario para crear tu cuenta y empezar a comprar.
-        </p>
+      {/* Encabezado */}
+      <div className="flex flex-col items-center gap-3 mb-6">
+        <div className="bg-gradient-to-br from-[#C73838] to-[#B11212] rounded-full p-4 shadow-lg">
+          <IconUserPlus size={36} className="text-white" />
+        </div>
+        <div className="text-center">
+          <h2 className="text-3xl font-extrabold text-[#C73838] tracking-tight">
+            Crear cuenta
+          </h2>
+          <p className="text-sm text-gray-500 mt-2">
+            Únete a nuestra comunidad y comienza a comprar
+          </p>
+        </div>
       </div>
-      {/* Email */}
-      <label className="flex flex-col text-sm font-semibold text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          <IconMail size={18} className="text-fuchsia-500" />
-          Email
-        </span>
-        <div className="relative">
+
+      {/* SECCIÓN 1: Credenciales */}
+      <div className="space-y-3">
+        {/* Email */}
+        <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+          <span className="flex items-center gap-2">
+            <IconMail size={18} className="text-[#C73838]" />
+            Email
+          </span>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 p-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition w-full"
+            className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
             placeholder="tucorreo@email.com"
           />
-        </div>
-      </label>
-      {/* Password */}
-      <label className="flex flex-col text-sm font-semibold text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          <IconLock size={18} className="text-fuchsia-500" />
-          Contraseña
-        </span>
-        <div className="relative">
+        </label>
+
+        {/* Contraseña */}
+        <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+          <span className="flex items-center gap-2">
+            <IconLock size={18} className="text-[#C73838]" />
+            Contraseña
+          </span>
           <input
             type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 p-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition w-full"
-            placeholder="Tu contraseña"
+            className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
+            placeholder="Mínimo 8 caracteres"
           />
-        </div>
-      </label>
-      {/* Confirm Password */}
-      <label className="flex flex-col text-sm font-semibold text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          <IconLock size={18} className="text-fuchsia-500" />
-          Confirmar contraseña
-        </span>
-        <div className="relative">
+        </label>
+
+        {/* Confirmar Contraseña */}
+        <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+          <span className="flex items-center gap-2">
+            <IconLock size={18} className="text-[#C73838]" />
+            Confirmar contraseña
+          </span>
           <input
             type="password"
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-1 p-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition w-full"
+            className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
             placeholder="Repite tu contraseña"
           />
+        </label>
+      </div>
+
+      {/* SECCIÓN 2: Información Personal */}
+      <div className="space-y-3 pt-2">
+        {/* Nombre de Usuario */}
+        <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+          <span className="flex items-center gap-2">
+            <IconUserCircle size={18} className="text-[#C73838]" />
+            Nombre de usuario
+          </span>
+          <input
+            type="text"
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
+            placeholder="Tu nombre de usuario"
+          />
+        </label>
+
+        {/* Género y Edad - Dos columnas */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Género */}
+          <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+            <span className="flex items-center gap-2">
+              {gender === "femenino" ? (
+                <IconGenderFemale size={18} className="text-[#C73838]" />
+              ) : (
+                <IconGenderMale size={18} className="text-[#C73838]" />
+              )}
+              Género
+            </span>
+            <select
+              required
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50 text-gray-700"
+            >
+              <option value="">Selecciona</option>
+              <option value="masculino">Masculino</option>
+              <option value="femenino">Femenino</option>
+            </select>
+          </label>
+
+          {/* Edad */}
+          <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+            <span className="flex items-center gap-2">
+              <IconUser size={18} className="text-[#C73838]" />
+              Edad
+            </span>
+            <input
+              type="number"
+              min="18"
+              max="120"
+              required
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
+              placeholder="18"
+            />
+          </label>
         </div>
-      </label>
-      {/* Tipo de Documento */}
-      <label className="flex flex-col text-sm font-medium text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          <IconId size={18} className="text-fuchsia-500" />
-          Tipo de Documento
-        </span>
-        <div className="relative">
+      </div>
+
+      {/* SECCIÓN 3: Identificación */}
+      <div className="space-y-3 pt-2">
+        {/* Tipo de Documento */}
+        <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+          <span className="flex items-center gap-2">
+            <IconId size={18} className="text-[#C73838]" />
+            Tipo de documento
+          </span>
           <select
             required
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value)}
-            className="mt-1 p-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition w-full"
+            className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50 text-gray-700"
           >
             <option value="cédula de ciudadanía">Cédula de Ciudadanía</option>
             <option value="tarjeta de identidad">Tarjeta de Identidad</option>
             <option value="pasaporte">Pasaporte</option>
             <option value="DNI">DNI</option>
           </select>
+        </label>
+
+        {/* Número de Documento y Teléfono */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Número de Documento */}
+          <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+            <span className="flex items-center gap-2">
+              <IconId size={18} className="text-[#C73838]" />
+              Documento
+            </span>
+            <input
+              type="text"
+              required
+              value={documentNumber}
+              onChange={(e) => setDocumentNumber(e.target.value)}
+              className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
+              placeholder="12345678"
+            />
+          </label>
+
+          {/* Número Telefónico */}
+          <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
+            <span className="flex items-center gap-2">
+              <IconPhone size={18} className="text-[#C73838]" />
+              Teléfono
+            </span>
+            <input
+              type="tel"
+              required
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
+              placeholder="3001234567"
+            />
+          </label>
         </div>
-      </label>
-      {/* Número de Documento */}
-      <label className="flex flex-col text-sm font-semibold text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          <IconId size={18} className="text-fuchsia-500" />
-          Número de documento
-        </span>
-        <div className="relative">
-          <input
-            type="text"
-            required
-            value={documentNumber}
-            onChange={(e) => setDocumentNumber(e.target.value)}
-            className="mt-1 p-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition w-full"
-            placeholder="Número de documento"
-          />
-        </div>
-      </label>
-      {/* Número Telefónico */}
-      <label className="flex flex-col text-sm font-semibold text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          <IconPhone size={18} className="text-fuchsia-500" />
-          Número telefónico
-        </span>
-        <div className="relative">
-          <input
-            type="tel"
-            required
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="mt-1 p-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition w-full"
-            placeholder="Tu número de celular"
-          />
-        </div>
-      </label>
-      {/* Nombre de Usuario */}
-      <label className="flex flex-col text-sm font-semibold text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          <IconUserCircle size={18} className="text-fuchsia-500" />
-          Nombre de usuario
-        </span>
-        <div className="relative">
-          <input
-            type="text"
-            required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="mt-1 p-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition w-full"
-            placeholder="Elige tu usuario"
-          />
-        </div>
-      </label>
-      {/* Género */}
-      <label className="flex flex-col text-sm font-semibold text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          {gender === "femenino" ? (
-            <IconGenderFemale size={18} className="text-fuchsia-500" />
-          ) : (
-            <IconGenderMale size={18} className="text-fuchsia-500" />
-          )}
-          Género
-        </span>
-        <select
-          required
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
-          className="mt-1 p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition"
-        >
-          <option value="">Seleccione</option>
-          <option value="masculino">Masculino</option>
-          <option value="femenino">Femenino</option>
-        </select>
-      </label>
-      {/* Edad */}
-      <label className="flex flex-col text-sm font-semibold text-gray-700 gap-1 relative">
-        <span className="flex items-center gap-2">
-          <IconUser size={18} className="text-fuchsia-500" />
-          Edad
-        </span>
-        <div className="relative">
-          <input
-            type="number"
-            min="0"
-            required
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            className="mt-1 p-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500 transition w-full"
-            placeholder="Tu edad"
-          />
-        </div>
-      </label>
+      </div>
+
       {/* Botón de registro */}
       <button
         type="submit"
-        className="mt-2 w-full bg-fuchsia-600 text-white font-bold py-2 rounded-lg shadow-xl hover:bg-fuchsia-700 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 text-base focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+        className="w-full bg-gradient-to-r from-[#C73838] via-[#B11212] to-orange-500 hover:from-[#B11212] hover:via-[#8f0e0e] hover:to-orange-600 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 mt-8 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
         style={{
-          boxShadow: '0 6px 24px 0 rgba(168, 85, 247, 0.13), 0 2px 8px 0 rgba(168, 85, 247, 0.13)'
+          boxShadow: '0 6px 24px 0 rgba(199, 56, 56, 0.15)'
         }}
       >
-        <span>Registrarme</span>
+        <span>Crear mi cuenta</span>
         <IconUserPlus className="text-white" size={20} />
       </button>
-      <div className="text-center text-xs text-gray-500 mt-2 flex items-center justify-center gap-1">
-        <IconArrowBackUp size={16} className="text-fuchsia-400" />
-        <span>¿Ya tienes cuenta?</span>
-        <a href="#" className="text-fuchsia-600 hover:underline hover:text-fuchsia-700 transition-colors font-semibold ml-1">
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 my-4">
+        <div className="flex-1 h-px bg-red-100"></div>
+        <span className="text-xs text-gray-400">o</span>
+        <div className="flex-1 h-px bg-red-100"></div>
+      </div>
+
+      {/* Link a login */}
+      <div className="text-center space-y-2">
+        <p className="text-sm text-gray-600">
+          ¿Ya tienes cuenta?
+        </p>
+        <button
+          type="button"
+          onClick={onSwitchToLogin}
+          className="inline-flex items-center gap-2 text-[#C73838] hover:text-[#B11212] font-semibold transition-colors hover:underline"
+        >
+          <IconLogin size={16} />
           Inicia sesión aquí
-        </a>
+        </button>
       </div>
     </form>
   );

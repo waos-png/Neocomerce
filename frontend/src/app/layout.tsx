@@ -10,10 +10,11 @@ import { CartProvider } from "@/app/context/CartContext";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "DYSAI E-commerce",
-  description: "Tienda en línea futurista inspirada en Mercado Libre",
+export const metadata = {
+  title: "NeoCommerce | Tu tienda del futuro",
+  description: "NeoCommerce es una plataforma de e-commerce moderna, rápida y segura.",
 };
+
 
 export default function RootLayout({
   children,

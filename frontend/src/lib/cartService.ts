@@ -1,9 +1,28 @@
 const API_BASE = "https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/cart/";
 
 export async function fetchCart() {
-  const res = await fetch(API_BASE, { credentials: "include" });
-  if (!res.ok) throw new Error("Error al cargar el carrito");
-  return res.json();
+  const url = API_BASE;
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      credentials: "include", // si realmente necesitas cookies
+      headers: {
+        "Accept": "application/json",
+      },
+      // mode: 'cors' // opcional, por defecto es 'cors' en cross-origin
+    });
+    if (!res.ok) {
+      // try to read body for message
+      const body = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status} - ${body || res.statusText}`);
+    }
+    return res.json();
+  } catch (err) {
+    // logueo más detallado
+    console.error("[fetchCart] falló petición a", url, err);
+    // lanzar para que el contexto lo capture y lo muestre si quieres
+    throw err;
+  }
 }
 
 export async function addToCart(productId: string, quantity: number = 1) {

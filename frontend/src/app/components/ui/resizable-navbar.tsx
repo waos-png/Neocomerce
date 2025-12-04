@@ -94,9 +94,9 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
       animate={{
         backdropFilter: visible ? "blur(10px)" : "none",
         boxShadow: visible
-          ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
+          ? "0 0 24px rgba(199, 56, 56, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(199, 56, 56, 0.04), 0 0 4px rgba(199, 56, 56, 0.08), 0 16px 68px rgba(199, 56, 56, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
           : "none",
-        width: visible ? "40%" : "100%",
+        width: visible ? "55%" : "100%",
         y: visible ? 20 : 0,
       }}
       transition={{
@@ -126,7 +126,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
     <motion.div
       onMouseLeave={() => setHovered(null)}
       className={cn(
-        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-black transition duration-200 hover:text-yellow-700 lg:flex lg:space-x-2 mr-4",
+        "absolute inset-0 hidden flex-1 flex-row items-center justify-center space-x-2 text-sm font-medium text-black transition duration-200 hover:text-[#C73838] lg:flex lg:space-x-2 mr-4",
         className,
       )}
     >
@@ -134,7 +134,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
         <a
           onMouseEnter={() => setHovered(idx)}
           onClick={onItemClick}
-          className="relative px-4 py-2 text-black hover:text-purple-700"
+          className="relative px-4 py-2 text-black hover:text-[#C73838]"
           key={`link-${idx}`}
           href={item.link}
         >
@@ -142,7 +142,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
           {hovered === idx && (
             <motion.div
               layoutId="hovered"
-              className="absolute inset-0 h-full w-full rounded-full bg-fuchsia-200"
+              className="absolute inset-0 h-full w-full rounded-full bg-red-100"
             />
           )}
           <span className="relative z-20 text-black">{item.name}</span>
@@ -159,7 +159,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
       animate={{
         backdropFilter: visible ? "blur(10px)" : "none",
         boxShadow: visible
-          ? "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
+          ? "0 0 24px rgba(199, 56, 56, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(199, 56, 56, 0.04), 0 0 4px rgba(199, 56, 56, 0.08), 0 16px 68px rgba(199, 56, 56, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
           : "none",
         width: visible ? "90%" : "100%",
         paddingRight: visible ? "12px" : "0px",
@@ -214,7 +214,7 @@ export const MobileNavMenu = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className={cn(
-            "absolute inset-x-0 top-16 z-50 flex w-full max-w-xs mx-auto flex-col items-start justify-start gap-4 rounded-2xl bg-white p-4 shadow-lg border border-gray-200",
+            "absolute inset-x-0 top-16 z-50 flex w-full max-w-xs mx-auto flex-col items-start justify-start gap-4 rounded-2xl bg-white p-4 shadow-lg border border-red-200",
             className,
           )}
         >
@@ -255,7 +255,7 @@ export const NavbarLogo = () => {
         className="object-contain"
         style={{ background: 'transparent' }}
       />
-      <span className="font-bold text-black">Dysai</span>
+      <span className="font-bold text-black">NeoCommerce</span>
     </a>
   );
 };
@@ -283,11 +283,11 @@ export const NavbarButton = ({
 
   const variantStyles = {
     primary:
-      "shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
+      "shadow-[0_0_24px_rgba(199,_56,_56,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(199,_56,_56,_0.04),_0_0_4px_rgba(199,_56,_56,_0.08),_0_16px_68px_rgba(199,_56,_56,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
     secondary: "bg-transparent shadow-none dark:text-white",
-    dark: "bg-black text-white shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
+    dark: "bg-black text-white shadow-[0_0_24px_rgba(199,_56,_56,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(199,_56,_56,_0.04),_0_0_4px_rgba(199,_56,_56,_0.08),_0_16px_68px_rgba(199,_56,_56,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
     gradient:
-      "bg-gradient-to-b from-blue-500 to-purple-700 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]",
+      "bg-gradient-to-b from-[#C73838] to-[#B11212] text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]",
   };
 
   return (
