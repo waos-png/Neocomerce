@@ -18,16 +18,10 @@ interface SellerLoginDialogProps {
   onLoginSuccess?: () => void;
 }
 
-// ===============================
-// Componente de login de vendedor
-// Permite a un vendedor iniciar sesión y guarda el token recibido
-// ===============================
 const SellerLoginDialog: React.FC<SellerLoginDialogProps> = ({ onSwitchToRegister, onLoginSuccess }) => {
-  // Estados locales para email y contraseña
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
 
-  // Maneja el envío del formulario de login de vendedor
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
@@ -56,8 +50,15 @@ const SellerLoginDialog: React.FC<SellerLoginDialogProps> = ({ onSwitchToRegiste
       }
 
       const data = await response.json();
+      // Guardar token y seller (ya existente)
       localStorage.setItem('token', data.access_token);
       localStorage.setItem('seller', JSON.stringify(data.seller));
+      // Notificar a la UI que hubo login (para que Navbar muestre "Vender")
+      try {
+        window.dispatchEvent(new Event('userLogin'));
+      } catch {
+        // no bloquear si falla en entornos extraños
+      }
 
       Swal.fire({
         icon: "success",
