@@ -27,17 +27,15 @@ interface NavbarDemoProps {
 }
 
 export function NavbarDemo({ onSearch }: NavbarDemoProps) {
-  // --- Estados ---
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isSeller, setIsSeller] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  // --- Efectos ---
-  // Cerrar menú usuario al hacer click fuera
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -52,7 +50,7 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
     };
   }, [userMenuOpen]);
 
-  // Leer usuario de localStorage
+  // Leer usuario y seller de localStorage
   useEffect(() => {
     function updateUserFromStorage() {
       if (typeof window !== 'undefined') {
@@ -66,6 +64,9 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
         } else {
           setUser(null);
         }
+
+        const storedSeller = localStorage.getItem('seller');
+        setIsSeller(!!storedSeller);
       }
     }
     updateUserFromStorage();
@@ -85,10 +86,9 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // --- Datos de navegación ---
-  const navItems = [
+  // Items comunes
+  const leftNavCommon = [
     { name: "Productos", link: "/products", icon: <IconShoppingBag size={18} /> },
-    { name: "Vender", link: "/vender", icon: <IconTrendingUp size={18} /> },
   ];
 
   // --- Render ---
@@ -101,7 +101,7 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
           
           {/* Botones de navegación - Izquierda */}
           <div className="hidden lg:flex items-center gap-2 flex-1">
-            {navItems.map((item, idx) => (
+            {leftNavCommon.map((item, idx) => (
               <Link
                 key={`nav-button-${idx}`}
                 href={item.link}
@@ -111,6 +111,17 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
                 <span>{item.name}</span>
               </Link>
             ))}
+
+            {/* Mostrar "Vender" solo si es seller */}
+            {isSeller && (
+              <Link
+                href="/vender"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-black border border-red-200 rounded-lg bg-white hover:bg-red-50 hover:border-[#C73838] hover:text-[#C73838] transition-all duration-200 shadow-sm"
+              >
+                <span className="text-[#C73838]"><IconTrendingUp size={18} /></span>
+                <span>Vender</span>
+              </Link>
+            )}
           </div>
 
           {/* Búsqueda y Usuario - Centro y Derecha */}
@@ -163,7 +174,7 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
 
             {/* Botones de navegación móvil */}
             <div className="flex flex-col gap-2 mb-4 w-full">
-              {navItems.map((item, idx) => (
+              {leftNavCommon.map((item, idx) => (
                 <Link
                   key={`mobile-nav-button-${idx}`}
                   href={item.link}
@@ -174,6 +185,17 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
                   {item.name}
                 </Link>
               ))}
+
+              {isSeller && (
+                <Link
+                  href="/vender"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-black border border-red-200 rounded-lg bg-white hover:bg-red-50 hover:border-[#C73838] hover:text-[#C73838] transition-all duration-200"
+                >
+                  <span className="text-[#C73838]"><IconTrendingUp size={18} /></span>
+                  Vender
+                </Link>
+              )}
             </div>
 
             {/* Links rápidos */}
@@ -209,6 +231,7 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
                     onClick={() => {
                       localStorage.removeItem('user');
                       localStorage.removeItem('token');
+                      localStorage.removeItem('seller');
                       setIsMobileMenuOpen(false);
                       window.dispatchEvent(new Event('userLogout'));
                     }}
