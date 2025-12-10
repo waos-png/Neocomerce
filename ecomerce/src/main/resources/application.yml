@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: neocommerce
+  datasource:
+    url: jdbc:mysql://localhost:3306/neocommerce?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+
+jwt:
+  secret: "Dw22CUKCKwIhu8MG3getdJwJoRkYFsVDtPbsUZQEj/CIiICjqRZ6FlZIctXCy+lE2vey8CEoaoys0r+s5lE1Bg=="
+  expiration-ms: 3600000
+
+server:
+  port: 8080
