@@ -273,11 +273,11 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export function useProducts(search?: string) {
   const { data, error, isLoading } = useSWR<Product[]>(
-    `https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/products/public/${search ? `?search=${search}` : ''}`,
+    `http://localhost:8080/products${search ? `?search=${search}` : ''}`,
     fetcher
   );
   const [timeoutReached, setTimeoutReached] = useState(false);
-
+  
   useEffect(() => {
     const timer = setTimeout(() => setTimeoutReached(true), 2000); // 2 segundos
     return () => clearTimeout(timer);

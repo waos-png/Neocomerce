@@ -1,0 +1,357 @@
+{
+  "info": {
+    "_postman_id": "4d4c7c34-4b3d-4c6d-a06f-10e31b75a6de",
+    "name": "Neocommerce API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Colección base para probar las APIs de Neocommerce. Usa {{baseUrl}} y un token JWT en {{token}}."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "1" },
+    { "key": "categoryId", "value": "1" },
+    { "key": "productId", "value": "1" },
+    { "key": "pedidoId", "value": "1" },
+    { "key": "vendedorId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth (public)",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentNumber\": 12345678,\n  \"documentType\": \"DNI\",\n  \"username\": \"cliente_demo\",\n  \"cellphone\": \"+51999999999\",\n  \"email\": \"demo@example.com\",\n  \"password\": \"changeme\",\n  \"gender\": \"MALE\",\n  \"age\": 25\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@example.com\",\n  \"password\": \"changeme\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List products (public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/products?q=camisa&categoryId={{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "q", "value": "camisa" },
+                { "key": "categoryId", "value": "{{categoryId}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get product (public)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/products/{{productId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Create product",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productName\": \"Zapatilla running\",\n  \"description\": \"Zapatilla ligera para entrenamiento\",\n  \"price\": 199.90,\n  \"imageUrl\": \"https://picsum.photos/seed/shoe/800/600\",\n  \"rating\": 4.5,\n  \"stock\": 50,\n  \"sellerId\": {{vendedorId}},\n  \"categoryIds\": [{{categoryId}}],\n  \"activo\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productName\": \"Zapatilla running pro\",\n  \"description\": \"Version actualizada\",\n  \"price\": 219.90,\n  \"imageUrl\": \"https://picsum.photos/seed/shoe2/800/600\",\n  \"rating\": 4.7,\n  \"stock\": 40,\n  \"sellerId\": {{vendedorId}},\n  \"categoryIds\": [{{categoryId}}],\n  \"activo\": true\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List categories (public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/categories?q=ropa",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"],
+              "query": [
+                { "key": "q", "value": "ropa" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get category (public)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Create category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ropa deportiva\",\n  \"type\": \"MODA\",\n  \"classification\": \"PREMIUM\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/categories/{{categoryId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ropa deportiva mujer\",\n  \"type\": \"MODA\",\n  \"classification\": \"ESTANDAR\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get cart by user",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/cart?userId={{userId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Add to cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/cart/add?userId={{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 2\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove from cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/cart/remove?userId={{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 1\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Empty cart",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/cart/empty?userId={{userId}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pedidos",
+      "item": [
+        {
+          "name": "List pedidos por usuario",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/pedidos?usuarioId={{userId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Get pedido",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/pedidos/{{pedidoId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Create pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/pedidos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{userId}},\n  \"items\": [\n    { \"productId\": {{productId}}, \"quantity\": 2 }\n  ]\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar estado pedido",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/pedidos/{{pedidoId}}/estado?estado=PAGADO"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "List usuarios",
+          "request": { "method": "GET", "url": "{{baseUrl}}/usuarios" },
+          "response": []
+        },
+        {
+          "name": "Get usuario",
+          "request": { "method": "GET", "url": "{{baseUrl}}/usuarios/{{userId}}" },
+          "response": []
+        },
+        {
+          "name": "Update usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/usuarios/{{userId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"cliente editado\",\n  \"cellphone\": \"+51987654321\",\n  \"gender\": \"FEMALE\",\n  \"age\": 30\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Vendedores",
+      "item": [
+        {
+          "name": "Get vendedor by usuario",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/vendedores/by-user?usuarioId={{userId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Create vendedor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/vendedores",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{userId}},\n  \"nombreTienda\": \"Neo Store\",\n  \"nitORfc\": \"123456789-0\",\n  \"telefono\": \"+51911111111\",\n  \"direccion\": \"Av. Demo 123\",\n  \"ciudad\": \"Lima\",\n  \"pais\": \"Peru\",\n  \"verificado\": false\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update vendedor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/vendedores/{{vendedorId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreTienda\": \"Neo Store Plus\",\n  \"nitORfc\": \"123456789-0\",\n  \"telefono\": \"+51922222222\",\n  \"direccion\": \"Av. Demo 456\",\n  \"ciudad\": \"Lima\",\n  \"pais\": \"Peru\",\n  \"verificado\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar vendedor",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/vendedores/{{vendedorId}}/verificado?value=true"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
