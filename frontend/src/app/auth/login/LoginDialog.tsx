@@ -12,6 +12,7 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import Swal from "sweetalert2";
+import { API_BASE } from '@/lib/apiBase';
 
 interface LoginDialogProps {
   onSwitchToRegister?: () => void;
@@ -31,60 +32,28 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ onSwitchToRegister, onLoginSu
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await fetch('https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/login/user/', {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: errorData.detail || 'Email o contraseña incorrectos',
-          background: "#fff5f5",
-          color: "#C73838",
-          iconColor: "#C73838",
-        });
+        Swal.fire({ icon: 'error', title: 'Error', text: errorData.detail || 'Email o contraseña incorrectos' });
         return;
       }
 
       const data = await response.json();
-      localStorage.setItem('token', data.access_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // AuthResponse: { id, email, username, rol, token }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify({ id: data.id, email: data.email, username: data.username, rol: data.rol }));
+      try { window.dispatchEvent(new Event('userLogin')); } catch {}
 
-      Swal.fire({
-        icon: "success",
-        title: "¡Bienvenido!",
-        text: "Has iniciado sesión correctamente",
-        showConfirmButton: false,
-        timer: 1500,
-        background: "#fff5f5",
-        color: "#C73838",
-        iconColor: "#C73838",
-      });
-
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      }
-
-      setEmail('');
-      setPassword('');
+      Swal.fire({ icon: 'success', title: '¡Bienvenido!', showConfirmButton: false, timer: 1400 });
+      if (onLoginSuccess) onLoginSuccess();
     } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Error al iniciar sesión: " + err.message,
-        background: "#fff5f5",
-        color: "#C73838",
-        iconColor: "#C73838",
-      });
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Error al iniciar sesión: ' + (err?.message || err) });
     }
   };
 

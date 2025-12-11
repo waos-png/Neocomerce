@@ -5,7 +5,7 @@ import { ProductsView } from './ProductsView';
 import { IconInfinity } from '@tabler/icons-react';
 
 export default function InfiniteProductsPage() {
-  const { products, isLoading, loadMore } = useInfiniteProducts();
+  const { products, isLoading, loadMore, hasMore } = useInfiniteProducts();
 
   const formattedProducts = (products || []).map((product: any) => ({
     ...product,
@@ -95,10 +95,11 @@ export default function InfiniteProductsPage() {
           <div className="flex items-center justify-center py-12 mb-12">
             <button
               onClick={loadMore}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 inline-flex items-center gap-2"
+              disabled={!hasMore}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <IconInfinity size={20} stroke={2.5} />
-              Cargar más productos
+              {hasMore ? 'Cargar más productos' : 'No hay más productos'}
             </button>
           </div>
         )}

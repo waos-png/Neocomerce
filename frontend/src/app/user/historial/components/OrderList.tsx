@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Order } from "../../types/user";
-import { IconLoader2, IconAlertCircle, IconCheck } from "@tabler/icons-react";
+import { IconLoader2, IconAlertCircle, IconCheck, IconClock, IconBox } from "@tabler/icons-react";
 import { fetchOrdersHistory } from "../../lib/userApi";
 
 function formatCOP(value: number) {
@@ -35,7 +35,7 @@ export function OrderList({ showToggleButton = true, showInitially = false }: Or
     try {
       const data = await fetchOrdersHistory();
       setOrders(Array.isArray(data) ? data : data.orders || []);
-    } catch (err:any) {
+    } catch (err: any) {
       setError(err.message || "Error desconocido");
     } finally {
       setLoading(false);
@@ -43,18 +43,21 @@ export function OrderList({ showToggleButton = true, showInitially = false }: Or
   };
 
   return (
-    <div className="w-full bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full bg-white rounded-xl shadow-md border border-gray-100">
+      <div className="px-6 py-6 border-b border-gray-100 flex justify-between items-start">
         <div>
-          <h2 className="text-2xl font-bold text-red-700">Historial de Compras</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Aquí puedes ver el resumen de tus compras recientes.
+          <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+            <IconBox size={28} className="text-red-600" />
+            Historial de Compras
+          </h2>
+          <p className="text-sm text-gray-600 mt-2">
+            Revisa el estado de tus pedidos anteriores
           </p>
         </div>
         {showToggleButton && (
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 transform hover:scale-105 transition-all"
+            className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold rounded-lg shadow-md transition-all"
           >
             {showHistory ? "Ocultar" : "Mostrar"}
           </button>
@@ -62,9 +65,9 @@ export function OrderList({ showToggleButton = true, showInitially = false }: Or
       </div>
 
       {showHistory && (
-        <>
+        <div className="p-6">
           {loading && (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-12">
               <IconLoader2 size={32} className="text-red-600 animate-spin mr-3" />
               <p className="text-gray-600 font-semibold">Cargando historial...</p>
             </div>
@@ -73,52 +76,58 @@ export function OrderList({ showToggleButton = true, showInitially = false }: Or
           {error && (
             <div className="flex items-center gap-3 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
               <IconAlertCircle size={20} />
-              {error}
+              <span>{error}</span>
             </div>
           )}
 
           {!loading && !error && (
-            <ul className="divide-y divide-gray-200">
-              {orders.length === 0 && (
-                <li className="py-8 text-center text-gray-500">
-                  No hay compras registradas.
-                </li>
-              )}
-              {orders.map((order, index) => (
-                <li
-                  key={index}
-                  className="py-4 px-4 hover:bg-red-50 rounded-md transition-colors duration-200 flex justify-between items-center"
-                >
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      {order.details || order.product_name || "Producto"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {order.date || order.created_at || "Fecha no disponible"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-900">
-                      {formatCOP(order.total || order.price || 0)}
-                    </p>
-                    <div className="flex items-center gap-1 mt-1">
-                      {(order.status === "Completado" || order.status === "completed") && (
-                        <IconCheck size={16} className="text-green-600" />
-                      )}
-                      <p className={`text-sm font-semibold ${
-                        order.status === "Completado" || order.status === "completed"
-                          ? "text-green-600"
-                          : "text-yellow-600"
-                      }`}>
-                        {order.status || "Pendiente"}
-                      </p>
+            <div className="space-y-4">
+              {orders.length === 0 ? (
+                <div className="text-center py-12">
+                  <IconBox size={48} className="mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-500 font-semibold">No hay compras registradas</p>
+                  <p className="text-sm text-gray-400">Tus pedidos aparecerán aquí</p>
+                </div>
+              ) : (
+                orders.map((order, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">
+                          {order.details || order.product_name || "Producto"}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {order.date || order.created_at || "Fecha no disponible"}
+                        </p>
+                      </div>
+                      <div className="text-right ml-4">
+                        <p className="text-lg font-black text-red-600">
+                          {formatCOP(order.total || order.price || 0)}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 justify-end">
+                          {order.status === "Completado" || order.status === "completed" ? (
+                            <>
+                              <IconCheck size={16} className="text-green-600" />
+                              <span className="text-sm font-semibold text-green-600">Completado</span>
+                            </>
+                          ) : (
+                            <>
+                              <IconClock size={16} className="text-yellow-600" />
+                              <span className="text-sm font-semibold text-yellow-600">Pendiente</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </li>
-              ))}
-            </ul>
+                ))
+              )}
+            </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

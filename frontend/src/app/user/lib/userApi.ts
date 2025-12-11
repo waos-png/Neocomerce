@@ -1,28 +1,22 @@
+import { API_BASE } from '@/lib/apiBase'; // si tu alias @ apunta a src, si no usa '../../lib/apiBase'
 export type ApiResponse<T = any> = T | null;
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("sellerToken") || localStorage.getItem("token") || null;
+  // Priorizar token regular; usar sellerToken solo si es vendedor
+  const token = localStorage.getItem("token");
+  if (token) return token;
+  const sellerToken = localStorage.getItem("sellerToken");
+  return sellerToken || null;
 }
 
-/**
- * Normaliza HeadersInit a un objeto plano Record<string,string>.
- * Maneja Headers, array de tuples y objetos planos.
- */
 function normalizeHeaders(h?: HeadersInit): Record<string,string> {
   const headers: Record<string,string> = {};
   if (!h) return headers;
-
   if (h instanceof Headers) {
-    h.forEach((value, key) => {
-      headers[key] = value;
-    });
+    h.forEach((value, key) => headers[key] = value);
   } else if (Array.isArray(h)) {
-    (h as [string, string][]).forEach(([key, value]) => {
-      headers[key] = value;
-    });
+    (h as [string,string][]).forEach(([k,v]) => headers[k] = v);
   } else {
     Object.assign(headers, h as Record<string,string>);
   }
@@ -31,17 +25,9 @@ function normalizeHeaders(h?: HeadersInit): Record<string,string> {
 
 async function request<T = any>(path: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
   const token = getToken();
-
-  // Normalizamos cualquier headers que venga en options
   const headers = normalizeHeaders(options.headers);
-  // Valor por defecto
-  if (!headers["content-type"]) {
-    headers["Content-Type"] = "application/json";
-  }
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
+  if (!headers["content-type"]) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -52,48 +38,86 @@ async function request<T = any>(path: string, options: RequestInit = {}): Promis
     } catch {}
     throw new Error(message);
   }
-
   if (res.status === 204) return null;
   const contentType = res.headers.get("content-type") || "";
   if (!contentType.includes("application/json")) {
     const txt = await res.text().catch(() => "");
-    try {
-      return (txt ? JSON.parse(txt) : null) as ApiResponse<T>;
-    } catch {
-      return (txt as unknown) as ApiResponse<T>;
-    }
+    try { return (txt ? JSON.parse(txt) : null) as ApiResponse<T>; } catch { return (txt as unknown) as ApiResponse<T>; }
   }
   return res.json();
 }
 
 /* Profile */
 export async function fetchProfile(): Promise<any> {
-  const isSeller = typeof window !== "undefined" && !!localStorage.getItem("sellerToken");
-  const endpoint = isSeller ? "/profile/seller/" : "/profile/user/";
-  return request(endpoint);
+  if (typeof window === "undefined") return null;
+  const userStr = localStorage.getItem("user");
+  if (!userStr) return null;
+  const user = JSON.parse(userStr);
+  if (!user?.id) return null;
+  return request(`/usuarios/${user.id}`);
 }
 
 export async function updateProfile(data: any): Promise<any> {
-  const isSeller = typeof window !== "undefined" && !!localStorage.getItem("sellerToken");
-  const endpoint = isSeller ? "/profile/seller/update/" : "/profile/user/update/";
-  return request(endpoint, { method: "PUT", body: JSON.stringify(data) });
+  if (typeof window === "undefined") throw new Error('No user context');
+  const userStr = localStorage.getItem("user");
+  if (!userStr) throw new Error('No usuario logueado');
+  const user = JSON.parse(userStr);
+  return request(`/usuarios/${user.id}`, { method: "PUT", body: JSON.stringify(data) });
 }
 
 /* Orders */
 export async function fetchOrdersHistory(): Promise<any> {
-  return request("/orders/history/");
+  if (typeof window === "undefined") return null;
+  const userStr = localStorage.getItem("user");
+  if (!userStr) return null;
+  const user = JSON.parse(userStr);
+  return request(`/pedidos?usuarioId=${user.id}`);
+}
+
+/* Orders - crear pedido */
+export async function createOrder(items: Array<{ productId: number; quantity: number }>): Promise<any> {
+  if (typeof window === "undefined") throw new Error("No user context");
+  const userStr = localStorage.getItem("user");
+  if (!userStr) throw new Error("No usuario logueado");
+  const user = JSON.parse(userStr);
+  const payload = {
+    usuarioId: user.id,
+    items: items.map(i => ({ productId: i.productId, quantity: i.quantity }))
+  };
+  return request(`/pedidos`, { method: "POST", body: JSON.stringify(payload) });
+}
+
+/* Vendedor - obtener por usuario y actualizar perfil */
+export async function fetchSellerByUser(usuarioId?: number): Promise<any> {
+  if (typeof window === "undefined") return null;
+  let id = usuarioId;
+  if (!id) {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) return null;
+    const user = JSON.parse(userStr);
+    id = user?.id;
+  }
+  if (!id) return null;
+  return request(`/vendedores/by-user?usuarioId=${id}`);
+}
+
+export async function updateSeller(vendedorId: number, data: any): Promise<any> {
+  if (!vendedorId) throw new Error("vendedorId requerido");
+  return request(`/vendedores/${vendedorId}`, { method: "PUT", body: JSON.stringify(data) });
 }
 
 /* Products (seller) */
 export async function createProduct(payload: any): Promise<any> {
-  return request("/products/create/", { method: "POST", body: JSON.stringify(payload) });
+  return request(`/products`, { method: "POST", body: JSON.stringify(payload) });
 }
 
-/* Export default for convenience */
 export default {
   request,
   fetchProfile,
   updateProfile,
   fetchOrdersHistory,
   createProduct,
+  createOrder,
+  fetchSellerByUser,
+  updateSeller,
 };

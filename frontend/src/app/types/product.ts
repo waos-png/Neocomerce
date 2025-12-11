@@ -1,26 +1,27 @@
 export interface CategoryObj {
-  id_product_category?: number;
-  element?: string;
-  type?: string;
-  clasification?: string;
+  id: number;
+  name: string;
+  type: string;
+  classification: string;
+}
+
+export interface VendorInfo {
+  id: number;
+  nombreTienda: string;
+  verificado: boolean;
 }
 
 export interface Product {
   id: number;
-  product_name?: string;
-  name?: string;
-  description?: string;
-  price?: number | string;
-  image_url?: string;
-  image?: string;
-  categories?: CategoryObj[]; // <-- Debe ser array de objetos
-  category?: string;
-  rating?: number;
-  stock?: number;
-  seller?: {
-    id: string | number;
-    name: string;
-    email?: string;
-  };
-  // ...otros campos
+  productName: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  rating: number;
+  stock: number;
+  activo: boolean;
+  vendedor: VendorInfo;
+  categorias: CategoryObj[];
+  creadoEn: string;
+  actualizadoEn: string;
 }

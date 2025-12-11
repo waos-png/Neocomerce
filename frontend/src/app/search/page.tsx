@@ -3,6 +3,7 @@
 import { ProductDetailModal } from '@/app/products/ProductDetailModal';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo, useRef } from 'react';
+import API_BASE from '@/lib/apiBase';
 import { FiArrowLeft } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import {
@@ -152,18 +153,24 @@ export default function SearchPage() {
 
     // Construye la URL con filtros y categoría
     const params = new URLSearchParams();
-    params.append('search', query);
-    if (category) params.append('category', category);
+    params.append('q', query);
+    if (category) params.append('categoryId', category);
     Object.entries(filtersFromParams).forEach(([key, value]) => {
       params.append(key, value);
     });
 
-    fetch(`https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/products/public/?${params}`)
+    fetch(`${API_BASE}/products?${params}`)
       .then(res => {
         if (!res.ok) throw new Error('Error al buscar productos');
         return res.json();
       })
-      .then(data => setRawResults(data.results || data || []))
+      .then(data => {
+        const backendList = Array.isArray(data) ? data : [];
+        const mapped = backendList
+          .map((p: any) => mapBackendProduct(p))
+          .filter(Boolean) as Product[];
+        setRawResults(mapped);
+      })
       .catch(() => setError('No se pudo obtener resultados.'))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -297,6 +304,52 @@ export default function SearchPage() {
     setAvailability('');
     setSortBy('relevant');
   };
+
+  // Normaliza producto backend -> shape de UI
+  function mapBackendProduct(item: any) {
+    if (!item) return null;
+    const categorias = item.categorias ?? item.categories ?? [];
+
+    const mappedCategories = Array.isArray(categorias)
+      ? categorias.map((cat: any) => ({
+          id: cat.id ?? null,
+          id_product_category: cat.id ?? null,
+          name: cat.name ?? cat.element ?? null,
+          element: cat.name ?? cat.element ?? null,
+          type: cat.type ?? null,
+          classification: cat.classification ?? cat.clasification ?? null,
+          clasification: cat.classification ?? cat.clasification ?? null,
+        }))
+      : [];
+
+    const imageUrl = item.imageUrl ?? item.image_url ?? item.image ?? undefined;
+
+    // price puede venir como string (BigDecimal)
+    let price: number | string | undefined = undefined;
+    if (item.price !== undefined && item.price !== null) {
+      const n = Number(item.price);
+      price = !Number.isNaN(n) ? n : String(item.price);
+    }
+
+    const rating = item.rating !== undefined && item.rating !== null ? Number(item.rating) : undefined;
+
+    return {
+      id: item.id != null ? String(item.id) : '',
+      name: item.productName ?? item.product_name ?? item.name ?? '',
+      productName: item.productName ?? item.product_name ?? item.name ?? '',
+      description: item.description ?? '',
+      price,
+      image_url: imageUrl,
+      image: imageUrl,
+      categories: mappedCategories,
+      categorias: mappedCategories,
+      category: mappedCategories[0]?.element ?? mappedCategories[0]?.name ?? item.category ?? '',
+      rating,
+      stock: item.stock ?? 0,
+      vendedor: item.vendedor ?? null,
+      _raw: item,
+    };
+  }
 
   return (
     <div className="max-w-5xl mx-auto py-10 px-4 mt-24">

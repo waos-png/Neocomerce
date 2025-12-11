@@ -12,6 +12,7 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import Swal from "sweetalert2";
+import { API_BASE } from '@/lib/apiBase';
 
 interface SellerLoginDialogProps {
   onSwitchToRegister?: () => void;
@@ -25,15 +26,10 @@ const SellerLoginDialog: React.FC<SellerLoginDialogProps> = ({ onSwitchToRegiste
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await fetch('https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/login/seller/', {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -50,9 +46,11 @@ const SellerLoginDialog: React.FC<SellerLoginDialogProps> = ({ onSwitchToRegiste
       }
 
       const data = await response.json();
-      // Guardar token y seller (ya existente)
-      localStorage.setItem('token', data.access_token);
-      localStorage.setItem('seller', JSON.stringify(data.seller));
+      // Guardar token genérico
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('sellerToken', data.token);
+      localStorage.setItem('user', JSON.stringify({ id: data.id, email: data.email, username: data.username, rol: data.rol }));
+
       // Notificar a la UI que hubo login (para que Navbar muestre "Vender")
       try {
         window.dispatchEvent(new Event('userLogin'));

@@ -16,8 +16,11 @@ import {
   IconGenderFemale,
   IconUserPlus,
   IconLogin,
+  IconEye,
+  IconEyeOff,
 } from '@tabler/icons-react';
 import Swal from "sweetalert2";
+import { API_BASE } from '@/lib/apiBase';
 
 interface RegisterDialogProps {
   onSwitchToLogin?: () => void;
@@ -34,6 +37,49 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onSwitchToLogin }) => {
   const [username, setUsername] = React.useState('');
   const [gender, setGender] = React.useState('');
   const [age, setAge] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
+  const [passwordValidation, setPasswordValidation] = React.useState({
+    hasMinLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
+
+  const [passwordsMatch, setPasswordsMatch] = React.useState(false);
+
+  React.useEffect(() => {
+    if (password) {
+      setPasswordValidation({
+        hasMinLength: password.length >= 8,
+        hasUppercase: /[A-Z]/.test(password),
+        hasLowercase: /[a-z]/.test(password),
+        hasNumber: /\d/.test(password),
+        hasSpecialChar: /[@$!%*?&]/.test(password),
+      });
+    } else {
+      setPasswordValidation({
+        hasMinLength: false,
+        hasUppercase: false,
+        hasLowercase: false,
+        hasNumber: false,
+        hasSpecialChar: false,
+      });
+    }
+  }, [password]);
+
+  React.useEffect(() => {
+    if (confirmPassword && password) {
+      setPasswordsMatch(password === confirmPassword);
+    } else {
+      setPasswordsMatch(false);
+    }
+  }, [password, confirmPassword]);
+
+  const passwordIsValid = passwordValidation.hasMinLength && passwordValidation.hasUppercase && 
+    passwordValidation.hasLowercase && passwordValidation.hasNumber && passwordValidation.hasSpecialChar;
 
   // Maneja el envío del formulario de registro de usuario
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -49,51 +95,52 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onSwitchToLogin }) => {
       });
       return;
     }
-    try {
-      const response = await fetch('https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/register/user/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id_user: Number(documentNumber),
-          document_type: documentType,
-          username,
-          cellphone: phoneNumber,
-          email,
-          password,
-          gender,
-          age: Number(age),
-        }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (errorData.password && Array.isArray(errorData.password)) {
-          alert('Error de contraseña: ' + errorData.password.join(' '));
-        } else if (errorData.detail) {
-          alert('Error: ' + errorData.detail);
-        } else if (typeof errorData === 'object') {
-          const firstKey = Object.keys(errorData)[0];
-          if (firstKey && Array.isArray(errorData[firstKey])) {
-            alert(`${firstKey}: ${errorData[firstKey].join(' ')}`);
-          } else {
-            alert('Error en el registro');
-          }
-        } else {
-          alert('Error en el registro');
-        }
-        return;
-      }
+    if (!passwordIsValid) {
       Swal.fire({
-        icon: "success",
-        title: "¡Registro exitoso!",
-        text: "Tu cuenta ha sido creada correctamente",
-        showConfirmButton: false,
-        timer: 1800,
+        icon: "error",
+        title: "Contraseña débil",
+        text: "La contraseña no cumple con los requisitos",
         background: "#fff5f5",
         color: "#C73838",
         iconColor: "#C73838",
       });
+      return;
+    }
+    try {
+      const payload = {
+        documentNumber: documentNumber ? Number(documentNumber) : null,
+        documentType:
+          documentType === 'cédula de ciudadanía' ? 'CC'
+          : documentType === 'tarjeta de identidad' ? 'TI'
+          : 'PAS',
+        username,
+        cellphone: phoneNumber,
+        email,
+        password,
+        gender: gender === 'masculino' ? 'M' : gender === 'femenino' ? 'F' : 'OTRO',
+        age: age ? Number(age) : null,
+        rol: 'CLIENTE'
+      };
+
+      const response = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const msg = errorData.detail || errorData.message || JSON.stringify(errorData) || 'Error en el registro';
+        Swal.fire({ icon: 'error', title: 'Error', text: msg });
+        return;
+      }
+
+      const data = await response.json();
+      // El backend devuelve AuthResponse { id, email, username, rol, token }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify({ id: data.id, email: data.email, username: data.username, rol: data.rol }));
+
+      Swal.fire({ icon: 'success', title: '¡Registro exitoso!', showConfirmButton: false, timer: 1600 });
       setEmail('');
       setPassword('');
       setConfirmPassword('');
@@ -104,14 +151,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onSwitchToLogin }) => {
       setGender('');
       setAge('');
     } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Error al registrar usuario: " + err.message,
-        background: "#fff5f5",
-        color: "#C73838",
-        iconColor: "#C73838",
-      });
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Error al registrar usuario: ' + (err?.message || err) });
     }
   };
 
@@ -160,30 +200,104 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onSwitchToLogin }) => {
             <IconLock size={18} className="text-[#C73838]" />
             Contraseña
           </span>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
-            placeholder="Mínimo 8 caracteres"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
+              placeholder="Mínimo 8 caracteres"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#C73838] transition"
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            >
+              {showPassword ? (
+                <IconEyeOff size={20} />
+              ) : (
+                <IconEye size={20} />
+              )}
+            </button>
+          </div>
+          {/* Requisitos de contraseña - Solo caja */}
+          {password && (
+            <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-200 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={passwordValidation.hasMinLength ? "text-green-600 font-bold" : "text-gray-400"}>
+                    {passwordValidation.hasMinLength ? "✓" : "○"}
+                  </span>
+                  <span className={passwordValidation.hasMinLength ? "text-green-700 font-medium" : "text-gray-500"}>
+                    Mínimo 8 caracteres
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={passwordValidation.hasUppercase ? "text-green-600 font-bold" : "text-gray-400"}>
+                    {passwordValidation.hasUppercase ? "✓" : "○"}
+                  </span>
+                  <span className={passwordValidation.hasUppercase ? "text-green-700 font-medium" : "text-gray-500"}>
+                    Al menos una letra mayúscula
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={passwordValidation.hasLowercase ? "text-green-600 font-bold" : "text-gray-400"}>
+                    {passwordValidation.hasLowercase ? "✓" : "○"}
+                  </span>
+                  <span className={passwordValidation.hasLowercase ? "text-green-700 font-medium" : "text-gray-500"}>
+                    Al menos una letra minúscula
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={passwordValidation.hasNumber ? "text-green-600 font-bold" : "text-gray-400"}>
+                    {passwordValidation.hasNumber ? "✓" : "○"}
+                  </span>
+                  <span className={passwordValidation.hasNumber ? "text-green-700 font-medium" : "text-gray-500"}>
+                    Al menos un número
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs col-span-2">
+                  <span className={passwordValidation.hasSpecialChar ? "text-green-600 font-bold" : "text-gray-400"}>
+                    {passwordValidation.hasSpecialChar ? "✓" : "○"}
+                  </span>
+                  <span className={passwordValidation.hasSpecialChar ? "text-green-700 font-medium" : "text-gray-500"}>
+                    Carácter especial (@$!%*?&)
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </label>
-
         {/* Confirmar Contraseña */}
         <label className="flex flex-col text-sm font-medium text-gray-700 gap-2">
           <span className="flex items-center gap-2">
             <IconLock size={18} className="text-[#C73838]" />
             Confirmar contraseña
           </span>
-          <input
-            type="password"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
-            placeholder="Repite tu contraseña"
-          />
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-2.5 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C73838] focus:border-transparent transition bg-red-50/50 hover:bg-red-50"
+              placeholder="Repite tu contraseña"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#C73838] transition"
+              aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            >
+              {showConfirmPassword ? (
+                <IconEyeOff size={20} />
+              ) : (
+                <IconEye size={20} />
+              )}
+            </button>
+          </div>
         </label>
       </div>
 
