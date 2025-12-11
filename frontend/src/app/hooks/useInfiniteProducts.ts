@@ -1,16 +1,36 @@
-import useSWRInfinite from 'swr/infinite';
+import useSWR from 'swr';
+import { useMemo, useState } from 'react';
 import { Product } from '../types/product';
+import API_BASE from '@/lib/apiBase';
 
 const PAGE_SIZE = 20;
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
-const getKey = (pageIndex: number, previousPageData: Product[]) => {
-  if (previousPageData && !previousPageData.length) return null;
-  return `https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/products/public/?page=${pageIndex + 1}&page_size=${PAGE_SIZE}`;
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error('Error al obtener productos');
+  }
+  return res.json();
 };
 
+
 export function useInfiniteProducts() {
-  const { data, size, setSize, isLoading } = useSWRInfinite(getKey, fetcher);
-  const products = data ? [].concat(...data) : [];
-  return { products, loadMore: () => setSize(size + 1), isLoading };
+  const { data, isLoading, error } = useSWR<Product[]>(`${API_BASE}/products`, fetcher);
+  const [page, setPage] = useState(1);
+
+  const products = useMemo(() => {
+    const all = data || [];
+    return all.slice(0, page * PAGE_SIZE);
+  }, [data, page]);
+
+  const hasMore = (data?.length || 0) > products.length;
+
+  return {
+    products,
+    isLoading,
+    error,
+    loadMore: () => {
+      if (hasMore) setPage(prev => prev + 1);
+    },
+    hasMore,
+  };
 }

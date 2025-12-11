@@ -3,6 +3,7 @@
 import { ProductDetailModal } from '@/app/products/ProductDetailModal';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo, useRef } from 'react';
+import API_BASE from '@/lib/apiBase';
 import { FiArrowLeft } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import {
@@ -152,18 +153,18 @@ export default function SearchPage() {
 
     // Construye la URL con filtros y categoría
     const params = new URLSearchParams();
-    params.append('search', query);
-    if (category) params.append('category', category);
+    params.append('q', query);
+    if (category) params.append('categoryId', category);
     Object.entries(filtersFromParams).forEach(([key, value]) => {
       params.append(key, value);
     });
 
-    fetch(`https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/products/public/?${params}`)
+    fetch(`${API_BASE}/products?${params}`)
       .then(res => {
         if (!res.ok) throw new Error('Error al buscar productos');
         return res.json();
       })
-      .then(data => setRawResults(data.results || data || []))
+      .then(data => setRawResults(data || []))
       .catch(() => setError('No se pudo obtener resultados.'))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps

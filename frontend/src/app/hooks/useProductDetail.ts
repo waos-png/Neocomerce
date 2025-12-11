@@ -1,11 +1,18 @@
 import useSWR from 'swr';
 import { Product } from '../types/product';
+import API_BASE from '@/lib/apiBase';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error('Error al obtener el producto');
+  }
+  return res.json();
+};
 
 export function useProductDetail(id: number | string) {
   const { data, error, isLoading } = useSWR<Product>(
-    id ? `https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/products/public/${id}/` : null,
+    id ? `${API_BASE}/products/${id}` : null, 
     fetcher
   );
   return { product: data, isLoading, error };
