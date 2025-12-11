@@ -16,8 +16,8 @@ import {
 } from "./resizable-navbar";
 import { useState, useEffect, useRef } from "react";
 import AdvancedSearchBar from "../../search/Searchbar";
-import { SidebarLink } from "./sidebar";
 import { IconHome, IconShoppingCart, IconUser, IconShoppingBag, IconTrendingUp } from "@tabler/icons-react";
+import { useCarrito } from "../../context/CartContext";
 import AuthDialog from "../../auth/AuthDialog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,6 +35,8 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { carrito } = useCarrito();
+  const cartCount = carrito?.length ?? 0;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -131,17 +133,30 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
             <div className="w-full max-w-lg">
               <AdvancedSearchBar size="sm" onSearch={onSearch} />
             </div>
+            <Link
+              href="/cart"
+              className="relative flex items-center justify-center w-20 h-10 rounded-full bg-white border border-red-200 hover:bg-red-50 hover:scale-105 transition-transform duration-150 p-0 overflow-visible z-10"
+              aria-label="Ver carrito"
+            >
+              <IconShoppingCart size={16} className="text-[#C73838] m-0" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center transform translate-x-1/3 -translate-y-1/3">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
             {/* Botón de usuario: foto si logueado, icono si no */}
             {user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
-                  className="flex items-center justify-center min-w-[100px] h-10 rounded-full bg-[#C73838] shadow hover:bg-[#B11212] border border-[#C73838] text-white font-semibold transition z-10"
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-[#C73838] shadow hover:bg-[#B11212] border border-[#C73838] text-white font-semibold transition z-10"
                   type="button"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   aria-label="Menú de usuario"
                   style={{ boxShadow: '0 2px 8px 0 rgba(199, 56, 56, 0.10)' }}
+                  title={user.username || 'Perfil'}
                 >
-                  {user.username || 'Perfil'}
+                  {(user.username || 'U').charAt(0).toUpperCase()}
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-red-200 z-50">
@@ -172,7 +187,7 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
               </div>
             ) : (
               <button
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow hover:bg-red-100 border border-red-200 transition z-10 relative"
+                className="flex items-center justify-center w-20 h-10 rounded-full bg-white shadow hover:bg-red-100 border border-red-200 transition z-10 relative"
                 type="button"
                 onClick={() => setAuthDialogOpen(true)}
                 aria-label="Abrir diálogo de usuario"

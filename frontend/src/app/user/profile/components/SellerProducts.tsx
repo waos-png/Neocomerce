@@ -92,9 +92,10 @@ export function SellerProducts({ allowAdd = true }: SellerProductsProps) {
 
       if (sellerRes.ok) {
         const seller = await sellerRes.json();
+        console.log("Seller obtenido:", seller);
         setSellerId(seller.id);
 
-        // Cargar productos del vendedor
+        // Cargar productos del vendedor específico
         const productsRes = await fetch(
           `${apiBase}/products?vendedorId=${seller.id}`,
           {
@@ -104,8 +105,11 @@ export function SellerProducts({ allowAdd = true }: SellerProductsProps) {
 
         if (productsRes.ok) {
           const prods = await productsRes.json();
+          console.log("Productos del seller:", prods);
           setProducts(Array.isArray(prods) ? prods : []);
         }
+      } else {
+        console.error("Error al obtener seller:", sellerRes.status);
       }
     } catch (err) {
       console.error("Error cargando vendedor y productos:", err);
@@ -171,7 +175,7 @@ export function SellerProducts({ allowAdd = true }: SellerProductsProps) {
         imageUrl: formData.imageUrl,
         rating: 0,
         stock: parseInt(String(formData.stock)),
-        sellerId: userId,
+        sellerId: sellerId,
         categoryIds: [parseInt(formData.categoryId)],
         activo: true,
       };
