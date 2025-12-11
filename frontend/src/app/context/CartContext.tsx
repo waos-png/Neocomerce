@@ -4,21 +4,32 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { fetchCart, addToCart, removeFromCart, emptyCart } from "@/lib/cartService";
 
 // --- Tipos ---
+export type CartItem = {
+  id: number;
+  productId: number;
+  productName: string;
+  imageUrl: string;
+  quantity: number;
+  priceAtAdd: number;
+  subtotal: number;
+};
+
 export type Producto = {
-  id: string;
+  id: string | number;
   nombre: string;
   precio: number;
   cantidad: number;
 };
 
 type CartContextType = {
-  carrito: Producto[];
+  carrito: CartItem[];
   agregarAlCarrito: (product_id: number, quantity?: number) => Promise<void>;
-  quitarDelCarrito: (id: string) => Promise<void>;
+  quitarDelCarrito: (id: number) => Promise<void>;
   cargarCarrito: () => Promise<void>;
   vaciarCarrito: () => Promise<void>;
   total: number;
   loading: boolean;
+  error: string | null;
 };
 
 // --- Contexto ---
@@ -35,18 +46,22 @@ export const useCarrito = () => {
 
 // --- Proveedor del contexto ---
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
-  const [carrito, setCarrito] = useState<Producto[]>([]);
+  const [carrito, setCarrito] = useState<CartItem[]>([]);
   const [total, setTotal] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Cargar carrito desde la API
   const cargarCarrito = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await fetchCart();
-      setCarrito(data.cart || []);
-    } catch (error) {
-      console.error("Error al cargar el carrito:", error);
+      // El backend devuelve CartResponse con 'items'
+      setCarrito(data.items || []);
+    } catch (err: any) {
+      console.error("Error al cargar el carrito:", err);
+      setError(err.message);
       setCarrito([]);
     } finally {
       setLoading(false);
@@ -55,47 +70,59 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Agregar producto al carrito usando la API
   const agregarAlCarrito = async (product_id: number, quantity: number = 1) => {
+    setError(null);
     try {
-      await addToCart(String(product_id), quantity);
+      await addToCart(product_id, quantity);
       await cargarCarrito();
-    } catch (error) {
-      throw error;
+    } catch (err: any) {
+      const errMsg = err.message || "Error al agregar al carrito";
+      setError(errMsg);
+      throw err;
     }
   };
 
   // Quitar producto del carrito usando la API
-  const quitarDelCarrito = async (id: string) => {
+  const quitarDelCarrito = async (id: number) => {
+    setError(null);
     try {
       await removeFromCart(id);
       await cargarCarrito();
-    } catch (error) {
-      throw error;
+    } catch (err: any) {
+      const errMsg = err.message || "Error al quitar del carrito";
+      setError(errMsg);
+      throw err;
     }
   };
 
   // Vaciar carrito usando la API
   const vaciarCarrito = async () => {
+    setError(null);
     try {
       await emptyCart();
-      await cargarCarrito();
-    } catch (error) {
-      throw error;
+      setCarrito([]);
+    } catch (err: any) {
+      const errMsg = err.message || "Error al vaciar el carrito";
+      setError(errMsg);
+      throw err;
     }
   };
 
   // Calcular total
   useEffect(() => {
-    const t = carrito.reduce((acc, prod) => acc + prod.precio * (prod.cantidad || 1), 0);
+    const t = carrito.reduce((acc, item) => acc + item.subtotal, 0);
     setTotal(t);
   }, [carrito]);
 
-  // Cargar el carrito al montar el provider
+  // Cargar el carrito al montar el provider (solo si hay usuario)
   useEffect(() => {
-    cargarCarrito();
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      cargarCarrito();
+    }
   }, []);
 
   return (
-    <CartContext.Provider value={{ carrito, agregarAlCarrito, quitarDelCarrito, cargarCarrito, vaciarCarrito, total, loading }}>
+    <CartContext.Provider value={{ carrito, agregarAlCarrito, quitarDelCarrito, cargarCarrito, vaciarCarrito, total, loading, error }}>
       {children}
     </CartContext.Provider>
   );

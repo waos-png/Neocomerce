@@ -1,23 +1,28 @@
+// Usuario según DTO backend
 export interface UserData {
-  id_user?: string;
-  document_type?: string;
+  id?: number;
+  documentNumber?: number;
+  documentType?: string;
+  email?: string;
   username?: string;
   cellphone?: string;
-  email?: string;
-  password?: string;
   gender?: string;
-  age?: string;
-  address?: string;
+  age?: number;
+  rol?: string;
+  activo?: boolean;
   photo?: string;
-  addresses_input?: string;
-  photos_input?: string;
 }
 
+// Vendedor hereda de Usuario y añade campos de vendedor
 export interface SellerData extends UserData {
-  id_seller?: string;
-  seller_name?: string;
-  insurance?: string;
-  rating?: string;
+  usuarioId?: number;
+  nombreTienda?: string;
+  nitORfc?: string;
+  telefono?: string;
+  direccion?: string;
+  ciudad?: string;
+  pais?: string;
+  verificado?: boolean;
 }
 
 export interface Order {

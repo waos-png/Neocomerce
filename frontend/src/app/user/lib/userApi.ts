@@ -74,6 +74,38 @@ export async function fetchOrdersHistory(): Promise<any> {
   return request(`/pedidos?usuarioId=${user.id}`);
 }
 
+/* Orders - crear pedido */
+export async function createOrder(items: Array<{ productId: number; quantity: number }>): Promise<any> {
+  if (typeof window === "undefined") throw new Error("No user context");
+  const userStr = localStorage.getItem("user");
+  if (!userStr) throw new Error("No usuario logueado");
+  const user = JSON.parse(userStr);
+  const payload = {
+    usuarioId: user.id,
+    items: items.map(i => ({ productId: i.productId, quantity: i.quantity }))
+  };
+  return request(`/pedidos`, { method: "POST", body: JSON.stringify(payload) });
+}
+
+/* Vendedor - obtener por usuario y actualizar perfil */
+export async function fetchSellerByUser(usuarioId?: number): Promise<any> {
+  if (typeof window === "undefined") return null;
+  let id = usuarioId;
+  if (!id) {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) return null;
+    const user = JSON.parse(userStr);
+    id = user?.id;
+  }
+  if (!id) return null;
+  return request(`/vendedores/by-user?usuarioId=${id}`);
+}
+
+export async function updateSeller(vendedorId: number, data: any): Promise<any> {
+  if (!vendedorId) throw new Error("vendedorId requerido");
+  return request(`/vendedores/${vendedorId}`, { method: "PUT", body: JSON.stringify(data) });
+}
+
 /* Products (seller) */
 export async function createProduct(payload: any): Promise<any> {
   return request(`/products`, { method: "POST", body: JSON.stringify(payload) });
@@ -85,4 +117,7 @@ export default {
   updateProfile,
   fetchOrdersHistory,
   createProduct,
+  createOrder,
+  fetchSellerByUser,
+  updateSeller,
 };

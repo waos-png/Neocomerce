@@ -199,6 +199,42 @@ const SellerRegisterDialog: React.FC<SellerRegisterDialogProps> = ({ onSwitchToL
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify({ id: data.id, email: data.email, username: data.username, rol: data.rol }));
 
+      // después de guardar token y user en localStorage
+      // crear perfil vendedor en backend
+      try {
+        const sellerPayload = {
+          usuarioId: data.id,
+          nombreTienda: businessName || ownerName || data.username,
+          nitORfc: null,
+          telefono: phoneNumber || null,
+          direccion: null,
+          ciudad: null,
+          pais: null,
+          verificado: false
+        };
+
+        const sellerRes = await fetch(`${API_BASE}/vendedores`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.token}`
+          },
+          body: JSON.stringify(sellerPayload),
+        });
+
+        if (!sellerRes.ok) {
+          // no bloquear el registro, pero informar
+          const err = await sellerRes.text().catch(() => sellerRes.statusText);
+          console.warn("No se pudo crear perfil de vendedor:", err);
+        } else {
+          // opcional: leer la respuesta del vendedor si la necesitas
+          const sellerDto = await sellerRes.json().catch(() => null);
+          console.info("Perfil de vendedor creado:", sellerDto);
+        }
+      } catch (err) {
+        console.error("Error creando perfil de vendedor:", err);
+      }
+
       Swal.fire({ icon: 'success', title: '¡Registro vendedor exitoso!', showConfirmButton: false, timer: 1600 });
       setEmail('');
       setPassword('');

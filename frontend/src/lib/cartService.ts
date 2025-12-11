@@ -1,14 +1,27 @@
 const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
-const API_BASE = `${BASE.replace(/\/$/,'')}/cart/`;
+const API_BASE = `${BASE.replace(/\/$/,'')}/cart`; 
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("sellerToken") || localStorage.getItem("token") || null;
 }
 
-export async function fetchCart(userId: number) {
-  if (!userId) throw new Error("fetchCart requiere userId");
-  const url = `${API_BASE}?userId=${userId}`;
+function getUserId(): number | null {
+  if (typeof window === "undefined") return null;
+  const userStr = localStorage.getItem("user");
+  if (!userStr) return null;
+  try {
+    const user = JSON.parse(userStr);
+    return user?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchCart(userId?: number) {
+  const id = userId || getUserId();
+  if (!id) throw new Error("No hay usuario logueado");
+  const url = `${API_BASE}?userId=${id}`; // -> /cart?userId=
   try {
     const token = getToken();
     const res = await fetch(url, {
@@ -29,16 +42,17 @@ export async function fetchCart(userId: number) {
   }
 }
 
-export async function addToCart(productId: string, quantity: number = 1, userId?: number) {
-  if (!userId) throw new Error("addToCart requiere userId");
+export async function addToCart(productId: string | number, quantity: number = 1, userId?: number) {
+  const id = userId || getUserId();
+  if (!id) throw new Error("No hay usuario logueado");
   const token = getToken();
-  const res = await fetch(`${API_BASE}add?userId=${userId}`, {
+  const res = await fetch(`${API_BASE}/add?userId=${id}`, { // <- nota la '/' antes de 'add'
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ productId, quantity }),
+    body: JSON.stringify({ productId: Number(productId), quantity }),
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
@@ -47,16 +61,17 @@ export async function addToCart(productId: string, quantity: number = 1, userId?
   return res.json();
 }
 
-export async function removeFromCart(productId: string, userId?: number) {
-  if (!userId) throw new Error("removeFromCart requiere userId");
+export async function removeFromCart(productId: string | number, userId?: number) {
+  const id = userId || getUserId();
+  if (!id) throw new Error("No hay usuario logueado");
   const token = getToken();
-  const res = await fetch(`${API_BASE}remove?userId=${userId}`, {
+  const res = await fetch(`${API_BASE}/remove?userId=${id}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ productId }),
+    body: JSON.stringify({ productId: Number(productId) }),
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
@@ -66,9 +81,10 @@ export async function removeFromCart(productId: string, userId?: number) {
 }
 
 export async function emptyCart(userId?: number) {
-  if (!userId) throw new Error("emptyCart requiere userId");
+  const id = userId || getUserId();
+  if (!id) throw new Error("No hay usuario logueado");
   const token = getToken();
-  const res = await fetch(`${API_BASE}empty?userId=${userId}`, {
+  const res = await fetch(`${API_BASE}/empty?userId=${id}`, {
     method: "POST",
     headers: {
       ...(token ? { "Authorization": `Bearer ${token}` } : {}),

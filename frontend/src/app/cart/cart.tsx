@@ -1,11 +1,17 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useCarrito } from "../context/CartContext";
 import { IconShoppingCart, IconTrash, IconCreditCard, IconLoader2 } from "@tabler/icons-react";
+import CheckoutModal from "@/app/components/CheckoutModal";
 
 // --- Componente visual del carrito ---
 const Carrito: React.FC = () => {
   const { carrito, quitarDelCarrito, total, vaciarCarrito, loading } = useCarrito();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleCheckout = () => {
+    setModalOpen(true);
+  };
 
   return (
     <section className="w-full max-w-4xl mx-auto">
@@ -37,31 +43,31 @@ const Carrito: React.FC = () => {
                   Productos ({carrito.length})
                 </h2>
               </div>
-              
+
               <ul className="divide-y divide-gray-200">
                 {carrito.map((producto) => (
                   <li key={producto.id} className="p-6 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex-1">
                         <span className="block text-lg font-bold text-gray-900 mb-2">
-                          {producto.nombre}
+                          {producto.productName}
                         </span>
                         <div className="flex items-center gap-4">
                           <span className="text-2xl font-black text-red-600">
-                            ${producto.precio?.toLocaleString('es-ES') || '0'}
+                            ${producto.priceAtAdd?.toLocaleString('es-ES') || '0'}
                           </span>
                           <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-semibold">
-                            x{producto.cantidad}
+                            x{producto.quantity}
                           </span>
                           <span className="text-gray-600 font-semibold">
-                            = ${(producto.precio * producto.cantidad)?.toLocaleString('es-ES') || '0'}
+                            = ${producto.subtotal?.toLocaleString('es-ES') || '0'}
                           </span>
                         </div>
                       </div>
-                      
+
                       <button
                         className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
-                        onClick={() => quitarDelCarrito(producto.id)}
+                        onClick={() => quitarDelCarrito(producto.productId)}
                         title="Quitar del carrito"
                       >
                         <IconTrash size={20} />
@@ -78,7 +84,7 @@ const Carrito: React.FC = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-32">
               <h3 className="text-xl font-black text-gray-900 mb-6">Resumen</h3>
-              
+
               <div className="space-y-4 mb-6 pb-6 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Subtotal:</span>
@@ -103,6 +109,7 @@ const Carrito: React.FC = () => {
                 <button
                   className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
                   disabled={carrito.length === 0}
+                  onClick={handleCheckout}
                 >
                   <IconCreditCard size={22} />
                   Finalizar compra
@@ -120,6 +127,14 @@ const Carrito: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Checkout */}
+      {modalOpen && (
+        <CheckoutModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+        />
       )}
     </section>
   );

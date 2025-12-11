@@ -31,16 +31,14 @@ export function useProfileData() {
   };
 
   const updateProfile = async (updatedData: UserData | SellerData) => {
-    setLoading(true);
     setError(null);
     try {
       await userApi.updateProfile(updatedData);
-      setUserData(updatedData);
+      // Después de guardar, recarga todo el perfil desde el servidor
+      await fetchProfile();
     } catch (err: any) {
       setError(err.message || "No se pudo actualizar el perfil");
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
