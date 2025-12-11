@@ -57,16 +57,18 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           try {
-            setUser(JSON.parse(storedUser));
+            const userObj = JSON.parse(storedUser);
+            setUser(userObj);
+            // isSeller es true si el rol es VENDEDOR
+            setIsSeller(userObj?.rol === 'VENDEDOR');
           } catch {
             setUser(null);
+            setIsSeller(false);
           }
         } else {
           setUser(null);
+          setIsSeller(false);
         }
-
-        const storedSeller = localStorage.getItem('seller');
-        setIsSeller(!!storedSeller);
       }
     }
     updateUserFromStorage();
@@ -130,16 +132,44 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
               <AdvancedSearchBar size="sm" onSearch={onSearch} />
             </div>
             {/* Botón de usuario: foto si logueado, icono si no */}
-            {user && user.token ? (
-              <button
-                className="flex items-center justify-center min-w-[100px] h-10 rounded-full bg-[#C73838] shadow hover:bg-[#B11212] border border-[#C73838] text-white font-semibold transition z-10 relative"
-                type="button"
-                onClick={() => router.push("/profile")}
-                aria-label="Ir a perfil de usuario"
-                style={{ boxShadow: '0 2px 8px 0 rgba(199, 56, 56, 0.10)' }}
-              >
-                Perfil
-              </button>
+            {user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  className="flex items-center justify-center min-w-[100px] h-10 rounded-full bg-[#C73838] shadow hover:bg-[#B11212] border border-[#C73838] text-white font-semibold transition z-10"
+                  type="button"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  aria-label="Menú de usuario"
+                  style={{ boxShadow: '0 2px 8px 0 rgba(199, 56, 56, 0.10)' }}
+                >
+                  {user.username || 'Perfil'}
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-red-200 z-50">
+                    <button
+                      onClick={() => {
+                        router.push("/user/profile");
+                        setUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-[#C73838] font-medium rounded-t-lg transition"
+                    >
+                      Mi Perfil
+                    </button>
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        localStorage.removeItem('sellerToken');
+                        setUserMenuOpen(false);
+                        window.dispatchEvent(new Event('userLogout'));
+                        router.push('/');
+                      }}
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 font-medium rounded-b-lg transition"
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <button
                 className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow hover:bg-red-100 border border-red-200 transition z-10 relative"
@@ -198,13 +228,6 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
               )}
             </div>
 
-            {/* Links rápidos */}
-            <div className="flex flex-row justify-around gap-2 w-full mb-4 px-2">
-              <SidebarLink link={{ label: "Inicio", href: "/", icon: <IconHome size={20} className="text-[#C73838]" /> }} />
-              <SidebarLink link={{ label: "Carrito", href: "/carrito", icon: <IconShoppingCart size={20} className="text-[#C73838]" /> }} />
-              <SidebarLink link={{ label: "Perfil", href: "/profile", icon: <IconUser size={20} className="text-[#C73838]" /> }} />
-            </div>
-
             {/* Sección de usuario/autenticación */}
             <div className="flex flex-col items-stretch w-full mt-4 gap-2">
               {user ? (
@@ -231,7 +254,7 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
                     onClick={() => {
                       localStorage.removeItem('user');
                       localStorage.removeItem('token');
-                      localStorage.removeItem('seller');
+                      localStorage.removeItem('sellerToken');
                       setIsMobileMenuOpen(false);
                       window.dispatchEvent(new Event('userLogout'));
                     }}

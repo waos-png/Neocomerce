@@ -19,7 +19,10 @@ export function useProfileData() {
     try {
       const data = await userApi.fetchProfile();
       setUserData(data);
-      setIsSeller(!!localStorage.getItem("sellerToken"));
+      // Detectar vendedor por el rol en localStorage, no por sellerToken
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : null;
+      setIsSeller(user?.rol === "VENDEDOR");
     } catch (err: any) {
       setError(err.message || "Error desconocido");
     } finally {

@@ -1,57 +1,82 @@
-const API_BASE = "https://suspicious-canid-dysai-ecommerce-b06e7d5a.koyeb.app/cart/";
+const BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
+const API_BASE = `${BASE.replace(/\/$/,'')}/cart/`;
 
-export async function fetchCart() {
-  const url = API_BASE;
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("sellerToken") || localStorage.getItem("token") || null;
+}
+
+export async function fetchCart(userId: number) {
+  if (!userId) throw new Error("fetchCart requiere userId");
+  const url = `${API_BASE}?userId=${userId}`;
   try {
+    const token = getToken();
     const res = await fetch(url, {
       method: "GET",
-      credentials: "include", // si realmente necesitas cookies
       headers: {
         "Accept": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
       },
-      // mode: 'cors' // opcional, por defecto es 'cors' en cross-origin
     });
     if (!res.ok) {
-      // try to read body for message
       const body = await res.text().catch(() => "");
       throw new Error(`HTTP ${res.status} - ${body || res.statusText}`);
     }
     return res.json();
   } catch (err) {
-    // logueo más detallado
     console.error("[fetchCart] falló petición a", url, err);
-    // lanzar para que el contexto lo capture y lo muestre si quieres
     throw err;
   }
 }
 
-export async function addToCart(productId: string, quantity: number = 1) {
-  const res = await fetch(`${API_BASE}add/`, {
+export async function addToCart(productId: string, quantity: number = 1, userId?: number) {
+  if (!userId) throw new Error("addToCart requiere userId");
+  const token = getToken();
+  const res = await fetch(`${API_BASE}add?userId=${userId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ product_id: productId, quantity }),
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ productId, quantity }),
   });
-  if (!res.ok) throw new Error("Error al agregar al carrito");
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || "Error al agregar al carrito");
+  }
   return res.json();
 }
 
-export async function removeFromCart(productId: string) {
-  const res = await fetch(`${API_BASE}remove/`, {
+export async function removeFromCart(productId: string, userId?: number) {
+  if (!userId) throw new Error("removeFromCart requiere userId");
+  const token = getToken();
+  const res = await fetch(`${API_BASE}remove?userId=${userId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ product_id: productId }),
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ productId }),
   });
-  if (!res.ok) throw new Error("Error al eliminar del carrito");
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || "Error al eliminar del carrito");
+  }
   return res.json();
 }
 
-export async function emptyCart() {
-  const res = await fetch(`${API_BASE}empty/`, {
+export async function emptyCart(userId?: number) {
+  if (!userId) throw new Error("emptyCart requiere userId");
+  const token = getToken();
+  const res = await fetch(`${API_BASE}empty?userId=${userId}`, {
     method: "POST",
-    credentials: "include",
+    headers: {
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    },
   });
-  if (!res.ok) throw new Error("Error al vaciar el carrito");
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || "Error al vaciar el carrito");
+  }
   return res.json();
 }

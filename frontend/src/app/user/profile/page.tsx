@@ -17,7 +17,10 @@ export default function ProfilePage() {
   const { userData, loading, error, isSeller, updateProfile, refetch } = useProfileData();
   const [editPersonal, setEditPersonal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [showAuthDialog, setShowAuthDialog] = useState(!userData && !loading);
+  const [showAuthDialog, setShowAuthDialog] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !localStorage.getItem("token") && !localStorage.getItem("sellerToken");
+  });
 
   const handleAuthDialogClose = (open: boolean) => {
     if (!open) {
