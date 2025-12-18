@@ -31,3 +31,42 @@ body {
     color: var(--foreground);
   }
 }
+
+/* Smooth gradient with subtle noise to avoid banding */
+.smooth-transition-gradient {
+  position: relative;
+  overflow: hidden;
+  /* overlap the banner slightly to hide any seam */
+  margin-top: -2px;
+  will-change: transform;
+}
+.smooth-transition-gradient::before,
+.smooth-transition-gradient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+.smooth-transition-gradient::before {
+  /* Base smooth linear gradient, slightly lifted and blurred to hide seam */
+  background: linear-gradient(180deg,
+    rgba(0,0,0,0.99) 0%,
+    rgba(0,0,0,0.86) 35%,
+    rgba(0,0,0,0.55) 60%,
+    rgba(0,0,0,0.25) 75%,
+    rgba(255,255,255,0) 100%);
+  filter: blur(1.2px);
+  transform: translateY(-2px);
+}
+.smooth-transition-gradient::after {
+  /* Subtle secondary layer to smooth any remaining bands */
+  background: linear-gradient(180deg,
+    rgba(0,0,0,0.95) 0%,
+    rgba(0,0,0,0.72) 40%,
+    rgba(0,0,0,0.28) 65%,
+    rgba(255,255,255,0) 100%);
+  opacity: 0.6;
+  transform: translateY(0.5px);
+  filter: blur(1.4px);
+}
