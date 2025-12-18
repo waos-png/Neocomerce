@@ -1,42 +1,379 @@
 "use client";
 
-import { FiTarget } from "react-icons/fi";
+import React, { useRef, useEffect, useState } from "react";
+import * as THREE from "three";
 
-const HeroBanner = () => {
-  return (
-    <>
-      {/* Banner principal */}
-      <div className="w-full bg-gradient-to-b from-black via-[#810606] to-[#a81515] pb-40 px-4 sm:px-20">
-        <div className="relative rounded-xl bg-gradient-to-r from-[#3b0202] via-[#B11212] to-[#3b0202] text-white text-center py-20 shadow-lg mt-30 overflow-hidden">
-          
-          <FiTarget
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white pointer-events-none z-0 opacity-40"
-            size={180}
-          />
+interface HeroBannerProps {
+  topColor?: string;
+  bottomColor?: string;
+  intensity?: number;
+  rotationSpeed?: number;
+  interactive?: boolean;
+  className?: string;
+  glowAmount?: number;
+  pillarWidth?: number;
+  pillarHeight?: number;
+  noiseIntensity?: number;
+  mixBlendMode?: React.CSSProperties["mixBlendMode"];
+  bannerHeight?: string;
+  pillarRotation?: number;
+}
 
-          <h2 className="relative text-4xl md:text-5xl font-bold mb-2 z-10 drop-shadow-lg">
-            ¡Bienvenidos a NeoCommerce!
-          </h2>
+const HeroBanner: React.FC<HeroBannerProps> = ({
+  topColor = "#3b0202",
+  bottomColor = "#ff000d",
+  intensity = 1.6,
+  rotationSpeed = 0.4,
+  interactive = false,
+  className = "",
+  glowAmount = 0.003,
+  pillarWidth = 3.3,
+  pillarHeight = 0.4,
+  noiseIntensity = 0.4,
+  mixBlendMode = "screen",
+  pillarRotation = 54,
+  bannerHeight = "100vh",
+}) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
+  const geometryRef = useRef<THREE.PlaneGeometry | null>(null);
+  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2(0, 0));
+  const timeRef = useRef<number>(0);
+  const [webGLSupported, setWebGLSupported] = useState<boolean>(true);
 
-          <p className="relative text-xl font-light z-10 mb-6 drop-shadow">
-            Explora el futuro del comercio electrónico
-          </p>
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    const gl =
+      (canvas.getContext("webgl") as WebGLRenderingContext | null) ||
+      (canvas.getContext("experimental-webgl") as WebGLRenderingContext | null);
+    if (!gl) {
+      setWebGLSupported(false);
+      console.warn("WebGL is not supported in this browser");
+    }
+  }, []);
 
-          <a
-            href="/products"
-            className="relative inline-block z-10 mt-2 px-8 py-3 bg-white text-[#810606] font-bold rounded-full shadow-lg hover:bg-[#f5eaea] transition"
-          >
-            Ver productos
-          </a>
+  useEffect(() => {
+    if (!containerRef.current || !webGLSupported) return;
+    const container = containerRef.current;
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 600;
 
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    cameraRef.current = camera;
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: true,
+        powerPreference: "high-performance",
+        precision: "lowp",
+        stencil: false,
+        depth: false,
+      });
+    } catch (err) {
+      console.error("Failed to create WebGL renderer:", err);
+      setWebGLSupported(false);
+      return;
+    }
+
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    container.appendChild(renderer.domElement);
+    // Ensure canvas covers the container but stays behind overlay content
+    renderer.domElement.style.position = "absolute";
+    renderer.domElement.style.top = "0";
+    renderer.domElement.style.left = "0";
+    renderer.domElement.style.width = "100%";
+    renderer.domElement.style.height = "100%";
+    renderer.domElement.style.zIndex = "0";
+    rendererRef.current = renderer;
+
+    const parseColor = (hex: string): THREE.Vector3 => {
+      const c = new THREE.Color(hex);
+      return new THREE.Vector3(c.r, c.g, c.b);
+    };
+
+    const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      uniform float uTime;
+      uniform vec2 uResolution;
+      uniform vec2 uMouse;
+      uniform vec3 uTopColor;
+      uniform vec3 uBottomColor;
+      uniform float uIntensity;
+      uniform bool uInteractive;
+      uniform float uGlowAmount;
+      uniform float uPillarWidth;
+      uniform float uPillarHeight;
+      uniform float uNoiseIntensity;
+      uniform float uPillarRotation;
+      varying vec2 vUv;
+
+      const float PI = 3.141592653589793;
+      const float EPSILON = 0.001;
+      const float E = 2.71828182845904523536;
+      const float HALF = 0.5;
+
+      mat2 rot(float angle) {
+        float s = sin(angle);
+        float c = cos(angle);
+        return mat2(c, -s, s, c);
+      }
+
+      float noise(vec2 coord) {
+        float G = E;
+        vec2 r = (G * sin(G * coord));
+        return fract(r.x * r.y * (1.0 + coord.x));
+      }
+
+      vec3 applyWaveDeformation(vec3 pos, float timeOffset) {
+        float frequency = 1.0;
+        float amplitude = 1.0;
+        vec3 deformed = pos;
+        for(float i = 0.0; i < 4.0; i++) {
+          deformed.xz *= rot(0.4);
+          float phase = timeOffset * i * 2.0;
+          vec3 oscillation = cos(deformed.zxy * frequency - phase);
+          deformed += oscillation * amplitude;
+          frequency *= 2.0;
+          amplitude *= HALF;
+        }
+        return deformed;
+      }
+
+      float blendMin(float a, float b, float k) {
+        float scaledK = k * 4.0;
+        float h = max(scaledK - abs(a - b), 0.0);
+        return min(a, b) - h * h * 0.25 / scaledK;
+      }
+
+      float blendMax(float a, float b, float k) {
+        return -blendMin(-a, -b, k);
+      }
+
+      void main() {
+        vec2 fragCoord = vUv * uResolution;
+        vec2 uv = (fragCoord * 2.0 - uResolution) / uResolution.y;
+
+        float rotAngle = uPillarRotation * PI / 180.0;
+        uv *= rot(rotAngle);
+
+        vec3 origin = vec3(0.0, 0.0, -10.0);
+        vec3 direction = normalize(vec3(uv, 1.0));
+
+        float maxDepth = 50.0;
+        float depth = 0.1;
+
+        mat2 rotX = rot(uTime * 0.3);
+        if(uInteractive && length(uMouse) > 0.0) {
+          rotX = rot(uMouse.x * PI * 2.0);
+        }
+
+        vec3 color = vec3(0.0);
+
+        for(float i = 0.0; i < 100.0; i++) {
+          vec3 pos = origin + direction * depth;
+          pos.xz *= rotX;
+
+          vec3 deformed = pos;
+          deformed.y *= uPillarHeight;
+          deformed = applyWaveDeformation(deformed + vec3(0.0, uTime, 0.0), uTime);
+
+          vec2 cosinePair = cos(deformed.xz);
+          float fieldDistance = length(cosinePair) - 0.2;
+
+          float radialBound = length(pos.xz) - uPillarWidth;
+          fieldDistance = blendMax(radialBound, fieldDistance, 1.0);
+          fieldDistance = abs(fieldDistance) * 0.15 + 0.01;
+
+          vec3 gradient = mix(uBottomColor, uTopColor, smoothstep(15.0, -15.0, pos.y));
+          color += gradient * pow(1.0 / fieldDistance, 1.0);
+
+          if(fieldDistance < EPSILON || depth > maxDepth) break;
+          depth += fieldDistance;
+        }
+
+        float widthNormalization = uPillarWidth / 3.0;
+        color = tanh(color * uGlowAmount / widthNormalization);
+
+        float rnd = noise(gl_FragCoord.xy);
+        color -= rnd / 15.0 * uNoiseIntensity;
+
+        gl_FragColor = vec4(color * uIntensity, 1.0);
+      }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uResolution: { value: new THREE.Vector2(width, height) },
+        uMouse: { value: mouseRef.current },
+        uTopColor: { value: parseColor(topColor) },
+        uBottomColor: { value: parseColor(bottomColor) },
+        uIntensity: { value: intensity },
+        uInteractive: { value: interactive },
+        uGlowAmount: { value: glowAmount },
+        uPillarWidth: { value: pillarWidth },
+        uPillarHeight: { value: pillarHeight },
+        uNoiseIntensity: { value: noiseIntensity },
+        uPillarRotation: { value: pillarRotation },
+      },
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+    });
+    materialRef.current = material;
+
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    geometryRef.current = geometry;
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    let mouseMoveTimeout: number | null = null;
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!interactive) return;
+      if (mouseMoveTimeout) return;
+      mouseMoveTimeout = window.setTimeout(() => {
+        mouseMoveTimeout = null;
+      }, 16);
+      const rect = container.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      mouseRef.current.set(x, y);
+    };
+
+    if (interactive) {
+      container.addEventListener("mousemove", handleMouseMove, { passive: true });
+    }
+
+    let lastTime = performance.now();
+    const targetFPS = 60;
+    const frameTime = 1000 / targetFPS;
+
+    const animate = (currentTime: number) => {
+      if (
+        !materialRef.current ||
+        !rendererRef.current ||
+        !sceneRef.current ||
+        !cameraRef.current
+      )
+        return;
+
+      const deltaTime = currentTime - lastTime;
+      if (deltaTime >= frameTime) {
+        timeRef.current += 0.016 * rotationSpeed;
+        materialRef.current.uniforms.uTime.value = timeRef.current;
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+        lastTime = currentTime - (deltaTime % frameTime);
+      }
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+
+    let resizeTimeout: number | null = null;
+    const handleResize = () => {
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(() => {
+        if (!rendererRef.current || !materialRef.current || !containerRef.current) return;
+        const newW = containerRef.current.clientWidth;
+        const newH = containerRef.current.clientHeight;
+        rendererRef.current.setSize(newW, newH);
+        materialRef.current.uniforms.uResolution.value.set(newW, newH);
+      }, 150);
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (interactive) container.removeEventListener("mousemove", handleMouseMove);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+        // @ts-ignore
+        rendererRef.current.forceContextLoss && rendererRef.current.forceContextLoss();
+        if (container.contains(rendererRef.current.domElement)) {
+          container.removeChild(rendererRef.current.domElement);
+        }
+      }
+      if (materialRef.current) materialRef.current.dispose();
+      if (geometryRef.current) geometryRef.current.dispose();
+
+      rendererRef.current = null;
+      materialRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
+      geometryRef.current = null;
+      rafRef.current = null;
+    };
+  }, [
+    topColor,
+    bottomColor,
+    intensity,
+    rotationSpeed,
+    interactive,
+    glowAmount,
+    pillarWidth,
+    pillarHeight,
+    noiseIntensity,
+    pillarRotation,
+    webGLSupported,
+  ]);
+
+  if (!webGLSupported) {
+    return (
+      <div
+        className={`w-full flex items-center justify-center bg-black/10 text-gray-500 text-sm ${className}`}
+        style={{ mixBlendMode, height: bannerHeight, minHeight: "280px", maxHeight: "600px", overflow: "hidden", position: "relative" }}
+      >
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+          <h1 className="text-white text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold text-center leading-tight px-6 py-3">
+            Bienvenidos a Neocommerce
+          </h1>
+          <p className="mt-3 text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-100 text-center">el futuro del comercio electrónico</p>
+          <div className="mt-5 flex gap-3">
+            <button className="pointer-events-auto px-4 py-2 bg-white text-black font-semibold rounded-md shadow-sm hover:brightness-95">Iniciar sesión</button>
+            <button className="pointer-events-auto px-4 py-2 bg-transparent border border-white/40 text-white font-semibold rounded-md hover:bg-white/10">Crear cuenta</button>
+          </div>
         </div>
-
-        {/* Categorías van en su propio componente */}
+        <span className="sr-only">WebGL not supported</span>
       </div>
+    );
+  }
 
-      {/* Transición visual */}
-      <div className="-mt-20 h-30 bg-gradient-to-b from-[#a81515] to-white w-full" />
-    </>
+  return (
+    <div
+      ref={containerRef}
+      className={`w-full ${className}`}
+      style={{ mixBlendMode, height: bannerHeight, minHeight: "280px", maxHeight: "600px", overflow: "hidden", position: "relative" }}
+    >
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+        <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-center leading-tight px-6 py-3">
+          Bienvenidos a Neocommerce
+        </h1>
+        <p className="mt-3 text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-100 text-center">el futuro del comercio electrónico</p>
+        <div className="mt-5 flex gap-3">
+          <button className="pointer-events-auto px-4 py-2 bg-white text-black font-semibold rounded-md shadow-sm hover:brightness-95">Iniciar sesión</button>
+          <button className="pointer-events-auto px-4 py-2 bg-transparent border border-white/40 text-white font-semibold rounded-md hover:bg-white/10">Crear cuenta</button>
+        </div>
+      </div>
+    </div>
   );
 };
 
