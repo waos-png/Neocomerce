@@ -66,11 +66,4 @@ NeoCommerce es una plataforma de ejemplo de e-commerce con un backend en Java (S
 - Backend: `mvn clean package` y desplegar el JAR generado.
 - Frontend: `npm run build` y desplegar según la guía de Next.js (Vercel, Docker, etc.).
 
-## Notas
 
-- Evitar subir credenciales y valores sensibles; revisar archivos de configuración antes de publicar.
-- Si quieres, puedo crear un `docker-compose.yml` para levantar backend, frontend y una BD de ejemplo.
-
----
-
-Si quieres que haga el commit de este cambio y lo suba a una rama, dime el mensaje de commit y la rama destino.
