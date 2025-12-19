@@ -33,6 +33,10 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  // Inicialización para abrir modal desde HeroBanner
+  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
+  const [authInitialIsSeller, setAuthInitialIsSeller] = useState(false);
+
   const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { carrito } = useCarrito();
@@ -61,7 +65,6 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
           try {
             const userObj = JSON.parse(storedUser);
             setUser(userObj);
-            // isSeller es true si el rol es VENDEDOR
             setIsSeller(userObj?.rol === 'VENDEDOR');
           } catch {
             setUser(null);
@@ -82,6 +85,20 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
     };
   }, []);
 
+  // Escuchar evento global openAuth (disparado por HeroBanner)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent | undefined;
+      const mode = ev?.detail?.mode === 'register' ? 'register' : 'login';
+      const isSeller = !!ev?.detail?.isSeller;
+      setAuthInitialMode(mode);
+      setAuthInitialIsSeller(isSeller);
+      setAuthDialogOpen(true);
+    };
+    window.addEventListener('openAuth', handler as EventListener);
+    return () => window.removeEventListener('openAuth', handler as EventListener);
+  }, []);
+
   // Efecto para cambiar el estado de la navbar al hacer scroll
   useEffect(() => {
     const handleScroll = () => setVisible(window.scrollY > 100);
@@ -95,15 +112,11 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
     { name: "Productos", link: "/products", icon: <IconShoppingBag size={18} /> },
   ];
 
-  // --- Render ---
   return (
     <div className="relative w-full">
       <Navbar>
-        {/* Escritorio */}
         <NavBody visible={visible}>
           <NavbarLogo />
-          
-          {/* Botones de navegación - Izquierda */}
           <div className="hidden lg:flex items-center gap-2 flex-1">
             {leftNavCommon.map((item, idx) => (
               <Link
@@ -115,8 +128,6 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
                 <span>{item.name}</span>
               </Link>
             ))}
-
-            {/* Mostrar "Vender" solo si es seller */}
             {isSeller && (
               <Link
                 href="/vender"
@@ -128,7 +139,6 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
             )}
           </div>
 
-          {/* Búsqueda y Usuario - Centro y Derecha */}
           <div className="flex items-center gap-3 justify-end flex-1 lg:flex-initial">
             <div className="w-full max-w-lg">
               <AdvancedSearchBar size="sm" onSearch={onSearch} />
@@ -145,7 +155,7 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
                 </span>
               )}
             </Link>
-            {/* Botón de usuario: foto si logueado, icono si no */}
+
             {user ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -199,7 +209,6 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
           </div>
         </NavBody>
 
-        {/* Móvil */}
         <MobileNav className="rounded-none shadow-none border-none">
           <MobileNavHeader>
             <NavbarLogo />
@@ -212,12 +221,10 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
             isOpen={isMobileMenuOpen}
             onClose={() => setIsMobileMenuOpen(false)}
           >
-            {/* Búsqueda móvil */}
             <div className="w-full mb-4">
               <AdvancedSearchBar size="sm" onSearch={onSearch} />
             </div>
 
-            {/* Botones de navegación móvil */}
             <div className="flex flex-col gap-2 mb-4 w-full">
               {leftNavCommon.map((item, idx) => (
                 <Link
@@ -243,7 +250,6 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
               )}
             </div>
 
-            {/* Sección de usuario/autenticación */}
             <div className="flex flex-col items-stretch w-full mt-4 gap-2">
               {user ? (
                 <>
@@ -296,8 +302,13 @@ export function NavbarDemo({ onSearch }: NavbarDemoProps) {
           </MobileNavMenu>
         </MobileNav>
       </Navbar>
-      {/* Diálogo de autenticación */}
-      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+
+      <AuthDialog
+        open={authDialogOpen}
+        onOpenChange={setAuthDialogOpen}
+        initialMode={authInitialMode}
+        initialIsSeller={authInitialIsSeller}
+      />
     </div>
   );
 }

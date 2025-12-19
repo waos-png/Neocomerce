@@ -25,12 +25,9 @@ const Main = () => {
         bannerHeight="75vh"
       />
 
-      {/* Degradado de transición (suavizado con varias paradas de color) */}
-      <div className="h-32 smooth-transition-gradient" />
-
-      <CategoriesGrid />
 
       <div className="max-w-7xl mx-auto bg-white px-4 sm:px-10 py-16 flex flex-col gap-20">
+        <CategoriesGrid />
         <FeaturedProducts />
         <BestSeller />
         <BenefitsSection />

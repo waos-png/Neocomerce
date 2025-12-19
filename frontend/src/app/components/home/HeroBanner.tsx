@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback, memo } from "react";
 import * as THREE from "three";
 
-interface HeroBannerProps {
+export interface HeroBannerProps {
   topColor?: string;
   bottomColor?: string;
   intensity?: number;
@@ -17,7 +17,35 @@ interface HeroBannerProps {
   mixBlendMode?: React.CSSProperties["mixBlendMode"];
   bannerHeight?: string;
   pillarRotation?: number;
+  ariaLabel?: string;
+  onPrimaryClick?: () => void;
+  onSecondaryClick?: () => void;
 }
+
+const HeroCTA: React.FC<{
+  onPrimary: () => void;
+  onSecondary: () => void;
+}> = memo(({ onPrimary, onSecondary }) => {
+  return (
+    <div className="mt-5 flex gap-3">
+      <button
+        onClick={onPrimary}
+        className="pointer-events-auto px-4 py-2 bg-white text-black font-semibold rounded-md shadow-sm hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
+        aria-label="Iniciar sesión"
+      >
+        Iniciar sesión
+      </button>
+      <button
+        onClick={onSecondary}
+        className="pointer-events-auto px-4 py-2 bg-transparent border border-white/40 text-white font-semibold rounded-md hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
+        aria-label="Crear cuenta"
+      >
+        Crear cuenta
+      </button>
+    </div>
+  );
+});
+HeroCTA.displayName = "HeroCTA";
 
 const HeroBanner: React.FC<HeroBannerProps> = ({
   topColor = "#3b0202",
@@ -33,6 +61,9 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
   mixBlendMode = "screen",
   pillarRotation = 54,
   bannerHeight = "100vh",
+  ariaLabel = "Hero de Neocommerce",
+  onPrimaryClick,
+  onSecondaryClick,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -44,6 +75,26 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2(0, 0));
   const timeRef = useRef<number>(0);
   const [webGLSupported, setWebGLSupported] = useState<boolean>(true);
+  const [user, setUser] = useState<any>(null);
+
+  const dispatchOpenAuth = useCallback((mode: "login" | "register") => {
+    if (typeof window !== "undefined" && (window as any).CustomEvent) {
+      window.dispatchEvent(new CustomEvent("openAuth", { detail: { mode, isSeller: false } }));
+    } else {
+      // Fallback: redirigir si no hay event support
+      window.location.href = mode === "login" ? "/auth/login" : "/auth/register";
+    }
+  }, []);
+
+  const handlePrimary = useCallback(() => {
+    if (onPrimaryClick) return onPrimaryClick();
+    dispatchOpenAuth("login");
+  }, [onPrimaryClick, dispatchOpenAuth]);
+
+  const handleSecondary = useCallback(() => {
+    if (onSecondaryClick) return onSecondaryClick();
+    dispatchOpenAuth("register");
+  }, [onSecondaryClick, dispatchOpenAuth]);
 
   useEffect(() => {
     const canvas = document.createElement("canvas");
@@ -61,6 +112,14 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
     const container = containerRef.current;
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
+
+    // Detectar color de fondo de la página y exponerlo como variable CSS para el separador
+    try {
+      const bodyBg = getComputedStyle(document.body).backgroundColor || "#ffffff";
+      container.style.setProperty("--page-bg", bodyBg);
+    } catch (e) {
+      container.style.setProperty("--page-bg", "#ffffff");
+    }
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
@@ -87,13 +146,17 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     container.appendChild(renderer.domElement);
-    // Ensure canvas covers the container but stays behind overlay content
+
+    // canvas should be ignored by assistive tech and not block pointer interactions (unless interactive)
+    renderer.domElement.setAttribute("aria-hidden", "true");
     renderer.domElement.style.position = "absolute";
     renderer.domElement.style.top = "0";
     renderer.domElement.style.left = "0";
     renderer.domElement.style.width = "100%";
     renderer.domElement.style.height = "100%";
     renderer.domElement.style.zIndex = "0";
+    renderer.domElement.style.pointerEvents = interactive ? "auto" : "none";
+
     rendererRef.current = renderer;
 
     const parseColor = (hex: string): THREE.Vector3 => {
@@ -336,21 +399,50 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
     webGLSupported,
   ]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const init = () => {
+      try {
+        const stored = localStorage.getItem("user");
+        setUser(stored ? JSON.parse(stored) : null);
+      } catch {
+        setUser(null);
+      }
+    };
+    init();
+    const onLogin = () => init();
+    const onLogout = () => setUser(null);
+    window.addEventListener("userLogin", onLogin);
+    window.addEventListener("userLogout", onLogout);
+    return () => {
+      window.removeEventListener("userLogin", onLogin);
+      window.removeEventListener("userLogout", onLogout);
+    };
+  }, []);
+
   if (!webGLSupported) {
     return (
       <div
+        role="region"
+        aria-label={`${ariaLabel} — fondo no soportado`}
         className={`w-full flex items-center justify-center bg-black/10 text-gray-500 text-sm ${className}`}
-        style={{ mixBlendMode, height: bannerHeight, minHeight: "280px", maxHeight: "600px", overflow: "hidden", position: "relative" }}
+        style={{
+          mixBlendMode,
+          height: bannerHeight,
+          minHeight: "280px",
+          maxHeight: "600px",
+          overflow: "hidden",
+          position: "relative",
+        }}
       >
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
           <h1 className="text-white text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold text-center leading-tight px-6 py-3">
             Bienvenidos a Neocommerce
           </h1>
-          <p className="mt-3 text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-100 text-center">el futuro del comercio electrónico</p>
-          <div className="mt-5 flex gap-3">
-            <button className="pointer-events-auto px-4 py-2 bg-white text-black font-semibold rounded-md shadow-sm hover:brightness-95">Iniciar sesión</button>
-            <button className="pointer-events-auto px-4 py-2 bg-transparent border border-white/40 text-white font-semibold rounded-md hover:bg-white/10">Crear cuenta</button>
-          </div>
+          <p className="mt-3 text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-100 text-center">
+            el futuro del comercio electrónico
+          </p>
+          {!user && <HeroCTA onPrimary={handlePrimary} onSecondary={handleSecondary} />}
         </div>
         <span className="sr-only">WebGL not supported</span>
       </div>
@@ -360,21 +452,44 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
   return (
     <div
       ref={containerRef}
+      role="banner"
+      aria-label={ariaLabel}
       className={`w-full ${className}`}
-      style={{ mixBlendMode, height: bannerHeight, minHeight: "280px", maxHeight: "600px", overflow: "hidden", position: "relative" }}
+      style={{
+        mixBlendMode,
+        height: bannerHeight,
+        minHeight: "280px",
+        maxHeight: "600px",
+        overflow: "hidden",
+        position: "relative",
+      }}
     >
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
         <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-center leading-tight px-6 py-3">
           Bienvenidos a Neocommerce
         </h1>
-        <p className="mt-3 text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-100 text-center">el futuro del comercio electrónico</p>
-        <div className="mt-5 flex gap-3">
-          <button className="pointer-events-auto px-4 py-2 bg-white text-black font-semibold rounded-md shadow-sm hover:brightness-95">Iniciar sesión</button>
-          <button className="pointer-events-auto px-4 py-2 bg-transparent border border-white/40 text-white font-semibold rounded-md hover:bg-white/10">Crear cuenta</button>
-        </div>
+        <p className="mt-3 text-lg sm:text-xl md:text-2xl lg:text-3xl text-gray-100 text-center">
+          el futuro del comercio electrónico
+        </p>
+        {!user && <HeroCTA onPrimary={handlePrimary} onSecondary={handleSecondary} />}
       </div>
+
+      {/* Separador degradado adaptativo */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: "clamp(56px, 12vh, 160px)",
+          zIndex: 5,
+          pointerEvents: "none",
+          background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 40%, var(--page-bg, #ffffff) 100%)",
+        }}
+      />
     </div>
   );
 };
 
-export default HeroBanner;
+export default memo(HeroBanner);
