@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LoginDialog from './login/LoginDialog';
 import RegisterDialog from './register/RegisterDialog';
 import SellerRegisterDialog from './register/SellerRegisterDialog';
@@ -11,15 +11,28 @@ import { IconUser, IconBriefcase, IconX } from '@tabler/icons-react';
  * Permite alternar entre login y registro, tanto para usuarios como para vendedores.
  * Muestra el formulario correspondiente según el modo y el tipo de usuario seleccionado.
  */
-const AuthDialog: React.FC<{ open: boolean; onOpenChange: (open: boolean) => void; showBackButton?: boolean }> = ({
+const AuthDialog: React.FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  showBackButton?: boolean;
+  initialMode?: 'login' | 'register';
+  initialIsSeller?: boolean;
+}> = ({
   open,
   onOpenChange,
   showBackButton = false,
+  initialMode = 'login',
+  initialIsSeller = false,
 }) => {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [isSeller, setIsSeller] = useState(false);
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [isSeller, setIsSeller] = useState<boolean>(initialIsSeller);
 
-  if (!open) return null;
+  useEffect(() => {
+    if (open) {
+      setMode(initialMode ?? 'login');
+      setIsSeller(!!initialIsSeller);
+    }
+  }, [open, initialMode, initialIsSeller]);
 
   const toggleButtonStyle = (isActive: boolean): React.CSSProperties => ({
     background: isActive
@@ -41,6 +54,8 @@ const AuthDialog: React.FC<{ open: boolean; onOpenChange: (open: boolean) => voi
   const handleLoginSuccess = () => {
     onOpenChange(false);
   };
+
+  if (!open) return null;
 
   return (
     <>
